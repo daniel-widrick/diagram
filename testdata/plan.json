@@ -1,0 +1,18 @@
+{
+  "direction": "topdown",
+  "nodes": [
+    {"id": "agg", "bar": 0, "lines": [[{"text": "Aggregate", "style": "title"}], [{"text": "0.05 ms · 0%", "style": "muted"}]]},
+    {"id": "sort", "bar": 0.01, "lines": [[{"text": "Sort ", "style": "title"}, {"text": "by p.name", "style": "muted"}], [{"text": "0.3 ms · 0%", "style": "muted"}]]},
+    {"id": "nl", "bar": 0, "lines": [[{"text": "Nested Loop", "style": "title"}], [{"text": "0.1 ms · 0%", "style": "muted"}]]},
+    {"id": "idx", "bar": 0, "lines": [[{"text": "Index Scan", "style": "title"}], [{"text": "products_pkey · p.id = 42", "style": "muted"}], [{"text": "0.07 ms · 0%", "style": "muted"}]]},
+    {"id": "gather", "bar": 0.17, "lines": [[{"text": "Gather ", "style": "title"}, {"text": "2 workers", "style": "muted"}], [{"text": "12.6 ms · 17%", "style": "muted"}]]},
+    {"id": "seq", "kind": "hot", "bar": 0.83, "maxWidth": 220, "overflow": "ellipsize", "lines": [[{"text": "Seq Scan ", "style": "title"}, {"text": "order_items", "style": "detail"}], [{"text": "filter product_id = 42 and status = 'shipped'", "style": "detail"}], [{"text": "62.0 ms · 83% of time", "style": "detail"}], [{"text": "est 312 · actual 260 rows", "style": "detail"}]]}
+  ],
+  "edges": [
+    {"from": "agg", "to": "sort", "label": "781 rows", "weight": 0.5, "arrow": "backward"},
+    {"from": "sort", "to": "nl", "label": "781 rows", "weight": 0.5, "arrow": "backward"},
+    {"from": "nl", "to": "idx", "label": "1 row", "weight": 0.05, "arrow": "backward"},
+    {"from": "nl", "to": "gather", "label": "781 rows", "weight": 0.5, "arrow": "backward"},
+    {"from": "gather", "to": "seq", "label": "260 rows × 3 workers", "weight": 0.5, "arrow": "backward"}
+  ]
+}
