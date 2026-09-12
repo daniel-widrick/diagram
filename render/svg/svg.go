@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html"
 	"math"
+	"strconv"
 	"strings"
 
 	"github.com/daniel-widrick/diagram"
@@ -275,7 +276,13 @@ const cornerRadius = 10
 // whose control point is the corner itself. The curve stays inside the
 // wedge between the two segments, so a route that avoids obstacles with
 // sharp corners still avoids them when rounded.
-func smoothPath(pts []diagram.Point) string {
+func smoothPath(in []diagram.Point) string {
+	// Work from rounded points so the corner arithmetic matches a renderer
+	// that only ever sees rounded coordinates.
+	pts := make([]diagram.Point, len(in))
+	for i, p := range in {
+		pts[i] = diagram.Point{X: math.Round(p.X*100) / 100, Y: math.Round(p.Y*100) / 100}
+	}
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "M%s,%s", f(pts[0].X), f(pts[0].Y))
 	for i := 1; i+1 < len(pts); i++ {
@@ -337,12 +344,12 @@ func clamp(v float64) float64 {
 	return v
 }
 
-// f formats a coordinate with at most two decimals and no trailing zeros.
+// f formats a coordinate rounded to two decimals in its shortest form.
+// The browser renderer formats the same way, so both emit identical text.
 func f(v float64) string {
-	s := fmt.Sprintf("%.2f", v)
-	s = strings.TrimRight(strings.TrimRight(s, "0"), ".")
-	if s == "-0" {
-		s = "0"
+	r := math.Round(v*100) / 100
+	if r == 0 {
+		return "0"
 	}
-	return s
+	return strconv.FormatFloat(r, 'f', -1, 64)
 }

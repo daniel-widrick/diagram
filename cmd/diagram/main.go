@@ -22,6 +22,7 @@ import (
 	"github.com/daniel-widrick/diagram"
 	"github.com/daniel-widrick/diagram/layout/layered"
 	"github.com/daniel-widrick/diagram/layout/tree"
+	"github.com/daniel-widrick/diagram/layoutjson"
 	"github.com/daniel-widrick/diagram/render/svg"
 	"github.com/daniel-widrick/diagram/spec"
 	"github.com/daniel-widrick/diagram/text"
@@ -32,6 +33,7 @@ func main() {
 	themeName := flag.String("theme", "default", "theme: default or tokens (CSS variables)")
 	title := flag.String("title", "", "accessible title")
 	inline := flag.Bool("inline", false, "omit the XML declaration for inlining in HTML")
+	format := flag.String("format", "svg", "output: svg, or json (render-ready geometry for web/diagram.js)")
 	flag.Parse()
 
 	data, err := io.ReadAll(os.Stdin)
@@ -55,6 +57,14 @@ func main() {
 	}
 	if err != nil {
 		fatal(err)
+	}
+	if *format == "json" {
+		data, err := layoutjson.Encode(l, opts.Styles)
+		if err != nil {
+			fatal(err)
+		}
+		os.Stdout.Write(append(data, '\n'))
+		return
 	}
 	th := svg.Default()
 	if *themeName == "tokens" {

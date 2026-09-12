@@ -27,7 +27,9 @@ layout/layered  layered layout for general directed graphs (Sugiyama): cycles
                 coordinate assignment, curved routing, self loops
 spec            JSON graph description shared by the CLI and other languages
 render/svg      SVG renderer with themes: literal colours or CSS custom properties
-cmd/diagram     CLI: JSON in, SVG out
+layoutjson      render-ready geometry as JSON (every coordinate absolute and rounded)
+web/diagram.js  browser renderer: the same SVG from that JSON, plus hover and selection
+cmd/diagram     CLI: JSON in, SVG or layout JSON out
 
 Both layouts support all four directions: top-down, bottom-up, left-to-right
 and right-to-left. Layouts work in an abstract (cross, rank) frame and
@@ -66,6 +68,26 @@ go run github.com/daniel-widrick/diagram/cmd/diagram@latest -layout layered < te
 ![Plan tree example](testdata/plan.svg)
 
 ![Join graph example](testdata/join.svg)
+
+## In the browser
+
+`diagram -format json` writes the layout as render-ready geometry, and
+`web/diagram.js` (an ES module with no dependencies or build step) turns it
+into SVG in the page:
+
+```js
+import { mount } from './diagram.js'
+const view = mount(document.querySelector('#host'), doc, {
+  theme: 'tokens',                       // or 'default', or your own theme object
+  onSelect: (id, node) => showDetails(node),
+})
+view.select('orders')                    // programmatic selection; Escape clears
+```
+
+Nodes get a `hover` class under the pointer and `selected` when clicked;
+style them from your page's CSS. `toSVG(doc, options)` returns the SVG text
+without mounting. The text it produces is identical to the Go renderer's,
+which `node web/test.mjs` checks for every example in `testdata`.
 
 ## Fonts
 

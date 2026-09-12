@@ -19,3 +19,8 @@ jobs:
       - run: go test -count=1 ./...
       - name: CLI smoke test
         run: go run ./cmd/diagram -title "Plan tree" < testdata/plan.json | head -c 200
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Browser renderer matches Go renderer
+        run: node web/test.mjs

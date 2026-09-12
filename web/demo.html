@@ -1,0 +1,28 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>diagram web renderer demo</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 24px; color: #1b2430; }
+  #host { display: inline-block; outline: none; }
+  #host svg g.node { cursor: pointer; }
+  #host svg g.node.hover > rect:first-child { stroke: #1f7a8c; stroke-width: 1.5; }
+  #host svg g.node.selected > rect:first-child { stroke: #1f7a8c; stroke-width: 2.5; }
+  pre { background: #f6f7f9; padding: 10px; max-width: 60ch; }
+</style>
+<h1>diagram web renderer</h1>
+<p>Load a JSON file produced by <code>diagram -format json</code>. Hover highlights, click selects, Escape clears.</p>
+<input type="file" id="file" accept=".json">
+<div id="host"></div>
+<pre id="out">no selection</pre>
+<script type="module">
+  import { mount } from './diagram.js'
+  let view
+  document.getElementById('file').addEventListener('change', async e => {
+    const doc = JSON.parse(await e.target.files[0].text())
+    if (view) view.destroy()
+    view = mount(document.getElementById('host'), doc, {
+      theme: 'default',
+      onSelect: (id, node) => { document.getElementById('out').textContent = id ? JSON.stringify(node, null, 2) : 'no selection' },
+    })
+  })
+</script>
