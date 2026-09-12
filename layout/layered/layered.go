@@ -104,7 +104,7 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 	assignRanks(nodes, edges)
 	layers := buildLayers(nodes, edges, frame.Dir.Transposed())
 	order(layers)
-	assignCross(layers, nodeSep)
+	assignCrossBK(layers, nodeSep)
 
 	// Rank axis positions per layer.
 	layerExt := make([]float64, len(layers))
@@ -566,76 +566,5 @@ func restore(layers, saved [][]*node) {
 		for j, n := range layers[i] {
 			n.order = j
 		}
-	}
-}
-
-// assignCross positions nodes on the cross axis: each node wants the mean
-// position of its neighbours, and nodes in a layer are then pushed apart
-// until they keep their order and separation.
-func assignCross(layers [][]*node, nodeSep float64) {
-	sep := func(a, b *node) float64 {
-		gap := nodeSep
-		if a.pn == nil || b.pn == nil {
-			gap = nodeSep / 2
-		}
-		return a.cross/2 + gap + b.cross/2
-	}
-	// Initial: sequential.
-	for _, l := range layers {
-		c := 0.0
-		for i, n := range l {
-			if i > 0 {
-				c += sep(l[i-1], n)
-			}
-			n.c = c
-		}
-	}
-	relax := func(l []*node, nbrs func(*node) []*node) {
-		for _, n := range l {
-			ns := nbrs(n)
-			if len(ns) == 0 {
-				continue
-			}
-			sum := 0.0
-			for _, m := range ns {
-				sum += m.c
-			}
-			n.c = sum / float64(len(ns))
-		}
-		// Push apart symmetrically until separation holds.
-		for pass := 0; pass < 60; pass++ {
-			moved := false
-			for i := 0; i+1 < len(l); i++ {
-				need := sep(l[i], l[i+1])
-				if d := need - (l[i+1].c - l[i].c); d > 0.01 {
-					l[i].c -= d / 2
-					l[i+1].c += d / 2
-					moved = true
-				}
-			}
-			if !moved {
-				break
-			}
-		}
-	}
-	for iter := 0; iter < 12; iter++ {
-		if iter%2 == 0 {
-			for l := 1; l < len(layers); l++ {
-				relax(layers[l], func(n *node) []*node { return n.preds })
-			}
-		} else {
-			for l := len(layers) - 2; l >= 0; l-- {
-				relax(layers[l], func(n *node) []*node { return n.succs })
-			}
-		}
-	}
-	// Final: straighten dummies toward the average of both neighbours.
-	for _, l := range layers {
-		relax(l, func(n *node) []*node {
-			if n.pn != nil {
-				return nil
-			}
-			return append(append([]*node(nil), n.preds...), n.succs...)
-		})
 	}
 }

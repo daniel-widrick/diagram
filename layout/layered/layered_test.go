@@ -165,6 +165,13 @@ func TestLongEdgesAreRouted(t *testing.T) {
 	if long == nil || len(long.Path) < 5 {
 		t.Fatalf("long edge should pass through dummies: %+v", long)
 	}
+	// Brandes-Köpf keeps the dummies of a long edge vertically aligned.
+	for _, p := range long.Path[1 : len(long.Path)-1] {
+		if check.Abs(p.X-long.Path[1].X) > 0.01 {
+			t.Errorf("long edge not straight through dummies: %v", long.Path)
+			break
+		}
+	}
 	// The long edge must not pass through the middle nodes.
 	for _, p := range long.Path[1 : len(long.Path)-1] {
 		for _, id := range []string{"m1", "m2"} {
@@ -242,5 +249,24 @@ func TestPortsSpread(t *testing.T) {
 	}
 	if len(starts) != 4 {
 		t.Errorf("expected 4 distinct ports on hub, got %d", len(starts))
+	}
+}
+
+func TestStraightChain(t *testing.T) {
+	// A simple chain must be a straight vertical line.
+	g := &diagram.Graph{
+		Nodes: []*diagram.Node{mk("a", "aaaa"), mk("b", "b"), mk("c", "cccccccc"), mk("d", "dd")},
+		Edges: []*diagram.Edge{{From: "a", To: "b"}, {From: "b", To: "c"}, {From: "c", To: "d"}},
+	}
+	l, err := Layout(g, opts())
+	if err != nil {
+		t.Fatal(err)
+	}
+	checkLayered(t, g, l)
+	x := l.Node("a").Rect.Center().X
+	for _, id := range []string{"b", "c", "d"} {
+		if check.Abs(l.Node(id).Rect.Center().X-x) > 0.01 {
+			t.Errorf("chain not straight: %s at %v vs %v", id, l.Node(id).Rect.Center().X, x)
+		}
 	}
 }
