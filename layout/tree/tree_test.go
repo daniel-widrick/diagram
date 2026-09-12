@@ -41,6 +41,7 @@ func planGraph() *diagram.Graph {
 func checkTree(t *testing.T, g *diagram.Graph, l *diagram.Layout) {
 	t.Helper()
 	check.Layout(t, g, l)
+	check.Ports(t, g, l)
 	children := map[string][]*diagram.PlacedNode{}
 	for _, e := range g.Edges {
 		children[e.From] = append(children[e.From], l.Node(e.To))
@@ -194,5 +195,29 @@ func TestRandomTrees(t *testing.T) {
 			t.Fatalf("iter %d: %v", iter, err)
 		}
 		checkTree(t, g, l)
+	}
+}
+
+func TestParentPorts(t *testing.T) {
+	g := planGraph()
+	l, err := Layout(g, opts())
+	if err != nil {
+		t.Fatal(err)
+	}
+	var toIdx, toGather diagram.Point
+	for _, e := range l.Edges {
+		if e.From == "nl" && e.To == "idx" {
+			toIdx = e.Path[0]
+		}
+		if e.From == "nl" && e.To == "gather" {
+			toGather = e.Path[0]
+		}
+	}
+	if toIdx.X >= toGather.X {
+		t.Errorf("ports not ordered like children: %v vs %v", toIdx, toGather)
+	}
+	nl := l.Node("nl").Rect
+	if toIdx.X <= nl.X || toGather.X >= nl.Right() || toGather.X-toIdx.X > diagram.PortSpacing+0.01 {
+		t.Errorf("ports misplaced: %v %v in %+v", toIdx, toGather, nl)
 	}
 }

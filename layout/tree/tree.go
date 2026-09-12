@@ -207,7 +207,23 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 		out.Nodes = append(out.Nodes, pn)
 	}
 
-	// Edges: parent far edge -> elbow -> child near edge, in the abstract frame.
+	// Outgoing ports: each parent spreads its edges along its far side in
+	// the children's order, so a fan-out does not leave from one point.
+	port := map[*node]float64{} // by child
+	for _, nd := range all {
+		if len(nd.children) == 0 {
+			continue
+		}
+		cs := make([]float64, len(nd.children))
+		for i, ch := range nd.children {
+			cs[i] = ch.c
+		}
+		for i, pc := range diagram.AssignPorts(nd.c, nd.cross, cs) {
+			port[nd.children[i]] = pc
+		}
+	}
+
+	// Edges: parent port -> elbow -> child near edge, in the abstract frame.
 	for _, e := range g.Edges {
 		c := byID[e.To]
 		p := c.parent
@@ -222,9 +238,10 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 		if transposed {
 			mid = levelEnd + elbow
 		}
-		pts := [][2]float64{{p.c, pEnd}, {p.c, mid}, {c.c, mid}, {c.c, cStart}}
-		if abs(p.c-c.c) < 0.5 {
-			pts = [][2]float64{{p.c, pEnd}, {c.c, cStart}}
+		pc := port[c]
+		pts := [][2]float64{{pc, pEnd}, {pc, mid}, {c.c, mid}, {c.c, cStart}}
+		if abs(pc-c.c) < 0.5 {
+			pts = [][2]float64{{pc, pEnd}, {c.c, cStart}}
 		}
 		for _, q := range pts {
 			pe.Path = append(pe.Path, frame.Point(q[0], q[1]))

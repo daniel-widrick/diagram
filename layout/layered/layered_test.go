@@ -51,6 +51,7 @@ func joinGraph() *diagram.Graph {
 func checkLayered(t *testing.T, g *diagram.Graph, l *diagram.Layout) {
 	t.Helper()
 	check.Layout(t, g, l)
+	check.Ports(t, g, l)
 	for _, e := range l.Edges {
 		if e.From == e.To {
 			continue
@@ -215,5 +216,31 @@ func TestRandomGraphs(t *testing.T) {
 			t.Fatalf("iter %d: %v", iter, err)
 		}
 		checkLayered(t, g, l)
+	}
+}
+
+func TestPortsSpread(t *testing.T) {
+	g := &diagram.Graph{
+		Nodes: []*diagram.Node{mk("hub", "hub node"), mk("a", "a"), mk("b", "b"), mk("c", "c"), mk("d", "d")},
+		Edges: []*diagram.Edge{{From: "hub", To: "a"}, {From: "hub", To: "b"}, {From: "hub", To: "c"}, {From: "hub", To: "d"}, {From: "a", To: "d"}, {From: "b", To: "d"}},
+	}
+	l, err := Layout(g, opts())
+	if err != nil {
+		t.Fatal(err)
+	}
+	checkLayered(t, g, l)
+	hub := l.Node("hub")
+	starts := map[float64]bool{}
+	for _, e := range l.Edges {
+		if e.From == "hub" {
+			x := e.Path[0].X
+			if x <= hub.Rect.X || x >= hub.Rect.Right() {
+				t.Errorf("port outside node: %v not in %+v", x, hub.Rect)
+			}
+			starts[x] = true
+		}
+	}
+	if len(starts) != 4 {
+		t.Errorf("expected 4 distinct ports on hub, got %d", len(starts))
 	}
 }

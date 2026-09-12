@@ -169,6 +169,8 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 		}
 	}
 
+	outPort, inPort := ports(nodes, edges)
+
 	for _, ed := range edges {
 		pe := &diagram.PlacedEdge{Edge: ed.e, Curved: true, Reversed: ed.reversed}
 		if ed.selfLoop {
@@ -181,8 +183,8 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 			out.Edges = append(out.Edges, pe)
 			continue
 		}
-		// Path in layout direction: from's far edge, dummies' centres, to's near edge.
-		pts := [][2]float64{{ed.from.c, ed.from.r + ed.from.rank}}
+		// Path in layout direction: from's port, dummies' centres, to's port.
+		pts := [][2]float64{{outPort[ed], ed.from.r + ed.from.rank}}
 		for _, d := range ed.chain {
 			pts = append(pts, [2]float64{d.c, d.r + d.rank/2})
 			if d.label {
@@ -196,7 +198,7 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 				}
 			}
 		}
-		pts = append(pts, [2]float64{ed.to.c, ed.to.r})
+		pts = append(pts, [2]float64{inPort[ed], ed.to.r})
 		if ed.reversed {
 			for i, j := 0, len(pts)-1; i < j; i, j = i+1, j-1 {
 				pts[i], pts[j] = pts[j], pts[i]
@@ -212,6 +214,57 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 }
 
 const loopSize = 18
+
+// ports spreads each node's outgoing edges along its far side and incoming
+// edges along its near side, ordered by where the other end goes.
+func ports(nodes []*node, edges []*edge) (outPort, inPort map[*edge]float64) {
+	outPort = map[*edge]float64{}
+	inPort = map[*edge]float64{}
+	outs := map[*node][]*edge{}
+	ins := map[*node][]*edge{}
+	for _, ed := range edges {
+		if ed.selfLoop {
+			continue
+		}
+		outs[ed.from] = append(outs[ed.from], ed)
+		ins[ed.to] = append(ins[ed.to], ed)
+	}
+	// The first waypoint after a node decides the port order: the first
+	// dummy of the chain, or the other node.
+	next := func(ed *edge) *node {
+		if len(ed.chain) > 0 {
+			return ed.chain[0]
+		}
+		return ed.to
+	}
+	prev := func(ed *edge) *node {
+		if len(ed.chain) > 0 {
+			return ed.chain[len(ed.chain)-1]
+		}
+		return ed.from
+	}
+	for _, n := range nodes {
+		if es := outs[n]; len(es) > 0 {
+			cs := make([]float64, len(es))
+			for i, ed := range es {
+				cs[i] = next(ed).c
+			}
+			for i, pc := range diagram.AssignPorts(n.c, n.cross, cs) {
+				outPort[es[i]] = pc
+			}
+		}
+		if es := ins[n]; len(es) > 0 {
+			cs := make([]float64, len(es))
+			for i, ed := range es {
+				cs[i] = prev(ed).c
+			}
+			for i, pc := range diagram.AssignPorts(n.c, n.cross, cs) {
+				inPort[es[i]] = pc
+			}
+		}
+	}
+	return outPort, inPort
+}
 
 func labelStyle(e *diagram.Edge) string {
 	if e.LabelStyle != "" {

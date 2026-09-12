@@ -101,6 +101,55 @@ func Layout(t *testing.T, g *diagram.Graph, l *diagram.Layout) {
 	}
 }
 
+// Ports verifies that edges leaving or entering one node from one side do
+// not share an endpoint, and that their order along the side matches the
+// order of the other ends on the cross axis.
+func Ports(t *testing.T, g *diagram.Graph, l *diagram.Layout) {
+	t.Helper()
+	type end struct {
+		at    float64 // endpoint on the cross axis
+		other float64 // where the edge heads, on the cross axis
+		text  string
+	}
+	sides := map[string][]end{} // node id + side
+	for _, e := range l.Edges {
+		if e.From == e.To || len(e.Path) < 2 {
+			continue
+		}
+		first, last := e.Path[0], e.Path[len(e.Path)-1]
+		second, penult := e.Path[1], e.Path[len(e.Path)-2]
+		fromKey := e.From + "/" + sideOf(g.Direction, l.Node(e.From).Rect, first)
+		toKey := e.To + "/" + sideOf(g.Direction, l.Node(e.To).Rect, last)
+		sides[fromKey] = append(sides[fromKey], end{Cross(g.Direction, first), Cross(g.Direction, second), e.From + "->" + e.To})
+		sides[toKey] = append(sides[toKey], end{Cross(g.Direction, last), Cross(g.Direction, penult), e.From + "->" + e.To})
+	}
+	for key, ends := range sides {
+		for i, a := range ends {
+			for _, b := range ends[i+1:] {
+				if Abs(a.at-b.at) < 0.01 {
+					t.Errorf("edges %s and %s share endpoint %v on %s", a.text, b.text, a.at, key)
+				}
+				if (a.at < b.at) != (a.other <= b.other) && Abs(a.other-b.other) > 0.01 {
+					t.Errorf("edges %s and %s leave %s in crossing order", a.text, b.text, key)
+				}
+			}
+		}
+	}
+}
+
+func sideOf(d diagram.Direction, r diagram.Rect, p diagram.Point) string {
+	switch {
+	case Abs(p.Y-r.Y) < 0.01:
+		return "top"
+	case Abs(p.Y-r.Bottom()) < 0.01:
+		return "bottom"
+	case Abs(p.X-r.X) < 0.01:
+		return "left"
+	default:
+		return "right"
+	}
+}
+
 func onBorder(r diagram.Rect, p diagram.Point) bool {
 	const eps = 0.01
 	inX := p.X >= r.X-eps && p.X <= r.Right()+eps
