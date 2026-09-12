@@ -12,6 +12,7 @@ package tree
 
 import (
 	"fmt"
+	"math"
 	"sort"
 
 	"github.com/daniel-widrick/diagram"
@@ -172,8 +173,38 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 		r += levelExt[d] + rankSep
 	}
 	totalRank := r - rankSep + margin
+	if len(g.Groups) > 0 {
+		// Room for group padding and labels beyond the first and last levels.
+		extra := diagram.GroupPad + diagram.GroupLabelExtent(g.Groups, o)
+		for d := range levelStart {
+			levelStart[d] += extra
+		}
+		totalRank += 2 * extra
+	}
 
-	// Cross extent, including labels hanging to the right of children.
+	// Groups: classify every node by the groups left of it, then shift
+	// whole classes apart so each box holds only its members.
+	labelExt := diagram.GroupLabelExtent(g.Groups, o)
+	var gnodes []diagram.GroupNode
+	if len(g.Groups) > 0 {
+		lo, hi := math.Inf(1), math.Inf(-1)
+		for _, nd := range all {
+			lo, hi = math.Min(lo, nd.c), math.Max(hi, nd.c)
+		}
+		for _, nd := range all {
+			ord := 0.0
+			if hi > lo {
+				ord = (nd.c - lo) / (hi - lo)
+			}
+			gnodes = append(gnodes, diagram.GroupNode{ID: nd.pn.ID, Group: nd.pn.Group, Layer: nd.depth, Order: ord, C: &nd.c, Cross: nd.cross,
+				RStart: levelStart[nd.depth], REnd: levelStart[nd.depth] + nd.rank})
+		}
+	}
+	cls, orderedGroups := diagram.AssignClasses(gnodes, g.Groups)
+	boxes := diagram.SeparateClasses(gnodes, cls, orderedGroups, nodeSep, labelExt, !transposed)
+
+	// Cross extent, including labels hanging to the right of children and
+	// group boxes.
 	minC, maxC := 0.0, 0.0
 	for i, nd := range all {
 		lo := nd.c - nd.cross/2
@@ -190,11 +221,16 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 			maxC = hi
 		}
 	}
+	for _, b := range boxes {
+		minC = math.Min(minC, b.MinC)
+		maxC = math.Max(maxC, b.MaxC)
+	}
 	dc := margin - minC
 	totalCross := maxC - minC + 2*margin
 	frame.Total = diagram.Size{W: totalCross, H: totalRank}
 
 	out := &diagram.Layout{Size: frame.Size(), HiddenNodes: hiddenIDs}
+	out.Groups = diagram.FinishGroups(orderedGroups, boxes, frame, dc, o)
 	for _, nd := range all {
 		pn := nd.pn
 		pn.Depth = nd.depth

@@ -28,6 +28,8 @@ type Theme struct {
 	EdgeLabel  string
 	BarTrack   string
 	BarFill    string
+	// GroupFill and GroupStroke paint group boundaries.
+	GroupFill, GroupStroke string
 	// Kinds overrides Node (for nodes) and Edge colours (Stroke) per Kind.
 	Kinds map[string]KindStyle
 	// FontMono and FontSans are CSS font-family stacks for the "mono" and
@@ -40,12 +42,14 @@ type Theme struct {
 // Default is a light theme with literal colours, suitable for standalone files.
 func Default() Theme {
 	return Theme{
-		Background: "#ffffff",
-		Node:       KindStyle{Fill: "#eef1f5", Stroke: "#1b2430", Text: "#1b2430", TextMuted: "#4e5a68"},
-		Edge:       "#1b2430",
-		EdgeLabel:  "#4e5a68",
-		BarTrack:   "#d3dae3",
-		BarFill:    "#1f7a8c",
+		Background:  "#ffffff",
+		Node:        KindStyle{Fill: "#eef1f5", Stroke: "#1b2430", Text: "#1b2430", TextMuted: "#4e5a68"},
+		Edge:        "#1b2430",
+		EdgeLabel:   "#4e5a68",
+		BarTrack:    "#d3dae3",
+		BarFill:     "#1f7a8c",
+		GroupFill:   "#f6f7f9",
+		GroupStroke: "#9aa3ad",
 		Kinds: map[string]KindStyle{
 			"hot":  {Fill: "#c94a34", Stroke: "#c94a34", Text: "#ffffff", TextMuted: "#ffe1db"},
 			"warn": {Fill: "#f5ebcb", Stroke: "#b8860b", Text: "#1b2430", TextMuted: "#6b5410"},
@@ -68,6 +72,8 @@ func Tokens() Theme {
 	t.EdgeLabel = "var(--ink-2)"
 	t.BarTrack = "var(--line)"
 	t.BarFill = "var(--accent)"
+	t.GroupFill = "color-mix(in srgb, var(--ink-2) 6%, transparent)"
+	t.GroupStroke = "var(--ink-3)"
 	t.Kinds["hot"] = KindStyle{Fill: "var(--hot)", Stroke: "var(--hot)", Text: "#ffffff", TextMuted: "rgba(255,255,255,0.85)"}
 	t.Kinds["weak"] = KindStyle{Stroke: "var(--hot)", StrokeDash: "6 4"}
 	return t
@@ -128,7 +134,28 @@ func Render(l *diagram.Layout, o Options) string {
 		fmt.Fprintf(&b, `  <rect width="%s" height="%s" fill="%s"/>`+"\n", f(l.Size.W), f(l.Size.H), th.Background)
 	}
 
-	// Edges first so nodes draw over them.
+	// Groups first, then edges, then nodes.
+	for _, gr := range l.Groups {
+		ks := KindStyle{Fill: th.GroupFill, Stroke: th.GroupStroke, Text: th.EdgeLabel}
+		if k, ok := th.Kinds[gr.Kind]; ok && gr.Kind != "" {
+			ks = merge(ks, k)
+		}
+		class := "group"
+		if gr.Kind != "" {
+			class += " " + html.EscapeString(gr.Kind)
+		}
+		fmt.Fprintf(&b, `  <g class="%s" data-id="%s">`+"\n", class, html.EscapeString(gr.ID))
+		fmt.Fprintf(&b, `    <rect x="%s" y="%s" width="%s" height="%s" rx="8" fill="%s" stroke="%s" stroke-dasharray="4 3"/>`+"\n",
+			f(gr.Rect.X), f(gr.Rect.Y), f(gr.Rect.W), f(gr.Rect.H), ks.Fill, ks.Stroke)
+		if gr.Label != "" {
+			st, _ := styles.Get("title")
+			fmt.Fprintf(&b, `    <text x="%s" y="%s" fill="%s" %s xml:space="preserve">%s</text>`+"\n",
+				f(gr.LabelPos.X), f(gr.LabelPos.Y+gr.LabelBaseline), ks.Text, fontAttrs(th, st), html.EscapeString(gr.Label))
+		}
+		b.WriteString("  </g>\n")
+	}
+
+	// Edges next so nodes draw over them.
 	for _, e := range l.Edges {
 		stroke := th.Edge
 		dash := ""

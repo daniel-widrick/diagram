@@ -43,6 +43,11 @@ func checkTree(t *testing.T, g *diagram.Graph, l *diagram.Layout) {
 	check.Layout(t, g, l)
 	check.Ports(t, g, l)
 	check.EdgesClear(t, g, l)
+	check.Groups(t, g, l)
+	if len(g.Groups) > 0 {
+		// Group boxes may cut through subtrees; centring cannot hold then.
+		return
+	}
 	children := map[string][]*diagram.PlacedNode{}
 	for _, e := range g.Edges {
 		if c := l.Node(e.To); c != nil && l.Node(e.From) != nil && !l.Node(e.From).Collapsed {
@@ -179,12 +184,19 @@ func TestRandomTrees(t *testing.T) {
 	for iter := 0; iter < 80; iter++ {
 		n := 2 + rng.Intn(40)
 		g := &diagram.Graph{Direction: dirs[iter%4]}
+		if iter%3 == 0 {
+			g.Groups = []diagram.Group{{ID: "g1", Label: "group one"}, {ID: "g2", Label: "two"}}
+		}
 		for i := 0; i < n; i++ {
 			lines := []diagram.Line{diagram.L("title", fmt.Sprintf("n%d %s", i, strings.Repeat("x", 1+rng.Intn(12))))}
 			for j := rng.Intn(3); j > 0; j-- {
 				lines = append(lines, diagram.L("muted", fmt.Sprintf("%0*d", 1+rng.Intn(30), j)))
 			}
-			g.Nodes = append(g.Nodes, &diagram.Node{ID: fmt.Sprint(i), Lines: lines, Collapsed: rng.Intn(8) == 0})
+			nd := &diagram.Node{ID: fmt.Sprint(i), Lines: lines, Collapsed: rng.Intn(8) == 0}
+			if len(g.Groups) > 0 && rng.Intn(3) > 0 {
+				nd.Group = g.Groups[rng.Intn(2)].ID
+			}
+			g.Nodes = append(g.Nodes, nd)
 			if i > 0 {
 				e := &diagram.Edge{From: fmt.Sprint(rng.Intn(i)), To: fmt.Sprint(i)}
 				if rng.Intn(2) == 0 {

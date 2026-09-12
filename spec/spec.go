@@ -21,6 +21,14 @@ type Graph struct {
 	Margin  float64 `json:"margin,omitempty"`
 	Nodes   []Node  `json:"nodes"`
 	Edges   []Edge  `json:"edges"`
+	Groups  []Group `json:"groups,omitempty"`
+}
+
+// Group is a labelled boundary around the nodes that name it.
+type Group struct {
+	ID    string `json:"id"`
+	Label string `json:"label,omitempty"`
+	Kind  string `json:"kind,omitempty"`
 }
 
 // Node is one box.
@@ -32,6 +40,7 @@ type Node struct {
 	// Overflow is "grow" (default), "ellipsize" or "wrap".
 	Overflow  string           `json:"overflow,omitempty"`
 	Collapsed bool             `json:"collapsed,omitempty"`
+	Group     string           `json:"group,omitempty"`
 	Lines     [][]diagram.Span `json:"lines"`
 }
 
@@ -80,7 +89,7 @@ func (sp Graph) Graph() (*diagram.Graph, error) {
 		if n.ID == "" {
 			return nil, fmt.Errorf("spec: node without id")
 		}
-		nd := &diagram.Node{ID: n.ID, Kind: n.Kind, Bar: n.Bar, MaxWidth: n.MaxWidth, Collapsed: n.Collapsed}
+		nd := &diagram.Node{ID: n.ID, Kind: n.Kind, Bar: n.Bar, MaxWidth: n.MaxWidth, Collapsed: n.Collapsed, Group: n.Group}
 		switch n.Overflow {
 		case "", "grow":
 		case "ellipsize":
@@ -94,6 +103,9 @@ func (sp Graph) Graph() (*diagram.Graph, error) {
 			nd.Lines = append(nd.Lines, diagram.Line(ln))
 		}
 		g.Nodes = append(g.Nodes, nd)
+	}
+	for _, gr := range sp.Groups {
+		g.Groups = append(g.Groups, diagram.Group{ID: gr.ID, Label: gr.Label, Kind: gr.Kind})
 	}
 	for _, e := range sp.Edges {
 		ed := &diagram.Edge{From: e.From, To: e.To, Label: e.Label, Kind: e.Kind, Weight: e.Weight}

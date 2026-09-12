@@ -77,6 +77,22 @@ put the same family first in the theme's font stack. A node whose label was
 measured elsewhere, for example in a browser with `measureText`, can pass
 its size in `Node.Size` and skips measurement.
 
+## Features shared by both layouts
+
+- **Ports.** Edges leave and enter a node at spread points along its side,
+  ordered so they never cross at the border.
+- **Routing.** Layered edges turn only in the bands between layers, on
+  separate tracks when they would overlap, so they never pass through a
+  node or another edge's label. `Routing` picks rounded (default) or sharp
+  corners; rounding stays inside the same corridor.
+- **Collapse.** `Node.Collapsed` hides a subtree (or, in a layered graph,
+  everything reachable only through the node); the node shows a +N badge and
+  `Layout.HiddenNodes` lists what was left out.
+- **Groups.** `Graph.Groups` and `Node.Group` draw a labelled box around a
+  set of nodes. Boxes contain exactly their members, never overlap outsiders
+  or each other, and edges between members stay inside. In trees a group
+  that cuts through a subtree overrides parent centring.
+
 ## Testing
 
 Every layout is checked against invariants on random inputs in all four

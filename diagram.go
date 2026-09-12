@@ -98,6 +98,8 @@ type Node struct {
 	// not measured. Use it when the caller measured the label itself (for
 	// example in a browser).
 	Size Size
+	// Group names the Graph.Groups entry this node belongs to, if any.
+	Group string
 	// Collapsed hides everything below this node: its subtree in a tree,
 	// and in a layered graph every node that can only be reached through
 	// it. The node itself stays and reports how many nodes it hides.
@@ -148,6 +150,7 @@ const (
 type Graph struct {
 	Nodes     []*Node
 	Edges     []*Edge
+	Groups    []Group
 	Direction Direction
 	Routing   Routing
 	// RankSep is the gap between levels; NodeSep the gap between siblings.
@@ -223,6 +226,7 @@ type Layout struct {
 	Size  Size
 	// HiddenNodes lists ids left out because an ancestor is collapsed.
 	HiddenNodes []string
+	Groups      []*PlacedGroup
 	byID        map[string]*PlacedNode
 }
 

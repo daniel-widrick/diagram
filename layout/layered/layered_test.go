@@ -53,6 +53,7 @@ func checkLayered(t *testing.T, g *diagram.Graph, l *diagram.Layout) {
 	check.Layout(t, g, l)
 	check.Ports(t, g, l)
 	check.EdgesClear(t, g, l)
+	check.Groups(t, g, l)
 	for _, e := range l.Edges {
 		if e.From == e.To {
 			continue
@@ -210,9 +211,15 @@ func TestRandomGraphs(t *testing.T) {
 	for iter := 0; iter < 60; iter++ {
 		n := 2 + rng.Intn(25)
 		g := &diagram.Graph{Direction: dirs[iter%4], Routing: diagram.Routing(iter / 4 % 2)}
+		if iter%3 == 0 {
+			g.Groups = []diagram.Group{{ID: "g1", Label: "group one"}, {ID: "g2", Label: "two"}}
+		}
 		for i := 0; i < n; i++ {
 			nd := mk(fmt.Sprint(i), fmt.Sprintf("node %d", i), fmt.Sprintf("%0*d", 1+rng.Intn(20), i))
 			nd.Collapsed = rng.Intn(10) == 0
+			if len(g.Groups) > 0 && rng.Intn(3) > 0 {
+				nd.Group = g.Groups[rng.Intn(2)].ID
+			}
 			g.Nodes = append(g.Nodes, nd)
 		}
 		m := n + rng.Intn(n*2)

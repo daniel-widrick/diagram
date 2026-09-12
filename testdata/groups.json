@@ -1,0 +1,23 @@
+{
+  "direction": "leftright",
+  "groups": [
+    {"id": "shop", "label": "schema shop"},
+    {"id": "app", "label": "schema app", "kind": "warm"}
+  ],
+  "nodes": [
+    {"id": "customers", "group": "shop", "lines": [[{"text": "customers", "style": "title"}], [{"text": "50,000 rows", "style": "muted"}]]},
+    {"id": "orders", "group": "shop", "lines": [[{"text": "orders", "style": "title"}], [{"text": "300,000 rows", "style": "muted"}]]},
+    {"id": "order_items", "group": "shop", "lines": [[{"text": "order_items", "style": "title"}], [{"text": "750,000 rows", "style": "muted"}]]},
+    {"id": "products", "group": "shop", "lines": [[{"text": "products", "style": "title"}], [{"text": "5,000 rows", "style": "muted"}]]},
+    {"id": "app_customers", "group": "app", "lines": [[{"text": "app.customers", "style": "title"}], [{"text": "500 rows", "style": "muted"}]]},
+    {"id": "app_orders", "group": "app", "lines": [[{"text": "app.orders", "style": "title"}], [{"text": "5,000 rows", "style": "muted"}]]},
+    {"id": "countries", "lines": [[{"text": "countries", "style": "title"}], [{"text": "10 rows", "style": "muted"}]]}
+  ],
+  "edges": [
+    {"from": "customers", "to": "orders", "label": "customer_id", "arrow": "none"},
+    {"from": "orders", "to": "order_items", "label": "order_id", "arrow": "none"},
+    {"from": "products", "to": "order_items", "label": "product_id", "arrow": "none"},
+    {"from": "countries", "to": "customers", "label": "country", "arrow": "none"},
+    {"from": "app_customers", "to": "app_orders", "label": "customer_id", "arrow": "none"}
+  ]
+}

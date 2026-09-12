@@ -120,6 +120,38 @@ func TestGoldenCollapsed(t *testing.T) {
 	}
 }
 
+func TestGoldenGroups(t *testing.T) {
+	g := loadSpec(t, filepath.Join("..", "..", "testdata", "groups.json"))
+	opts := diagram.Options{Measurer: text.NewGoFonts(), Styles: text.DefaultStyles()}
+	l, err := layered.Layout(g, opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(l.Groups) != 2 {
+		t.Fatalf("groups: %d", len(l.Groups))
+	}
+	got := Render(l, Options{Theme: Default(), Styles: opts.Styles, Title: "Groups"})
+	golden := filepath.Join("..", "..", "testdata", "groups.svg")
+	if *update {
+		if err := os.WriteFile(golden, []byte(got), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	want, err := os.ReadFile(golden)
+	if err != nil {
+		t.Fatalf("%v (run with -update to create)", err)
+	}
+	if string(want) != got {
+		t.Errorf("rendered SVG differs from %s", golden)
+	}
+	if strings.Count(got, `class="group`) != 2 || !strings.Contains(got, ">schema shop</text>") {
+		t.Error("group boxes or labels missing")
+	}
+	if strings.Index(got, `class="group`) > strings.Index(got, `class="node`) {
+		t.Error("groups must be drawn before nodes")
+	}
+}
+
 func TestTokensTheme(t *testing.T) {
 	g := loadSpec(t, filepath.Join("..", "..", "testdata", "plan.json"))
 	opts := diagram.Options{Measurer: text.NewGoFonts(), Styles: text.DefaultStyles()}

@@ -199,6 +199,42 @@ func segmentEntersRect(a, b diagram.Point, r diagram.Rect) bool {
 	return t0 < t1
 }
 
+// Groups verifies each group box contains all its members, contains no
+// other node, and overlaps no other group box; a labelled group is wide
+// enough for its label.
+func Groups(t *testing.T, g *diagram.Graph, l *diagram.Layout) {
+	t.Helper()
+	member := map[string]string{}
+	for _, n := range g.Nodes {
+		if n.Group != "" {
+			member[n.ID] = n.Group
+		}
+	}
+	const eps = 0.01
+	for i, gr := range l.Groups {
+		if gr.Rect.X < -eps || gr.Rect.Y < -eps || gr.Rect.Right() > l.Size.W+eps || gr.Rect.Bottom() > l.Size.H+eps {
+			t.Errorf("group %s outside drawing: %+v in %+v", gr.ID, gr.Rect, l.Size)
+		}
+		for _, n := range l.Nodes {
+			inside := n.Rect.X >= gr.Rect.X-eps && n.Rect.Y >= gr.Rect.Y-eps && n.Rect.Right() <= gr.Rect.Right()+eps && n.Rect.Bottom() <= gr.Rect.Bottom()+eps
+			if member[n.ID] == gr.ID && !inside {
+				t.Errorf("group %s does not contain member %s: %+v vs %+v", gr.ID, n.ID, gr.Rect, n.Rect)
+			}
+			if member[n.ID] != gr.ID && n.Rect.Overlaps(gr.Rect) {
+				t.Errorf("group %s overlaps non-member %s", gr.ID, n.ID)
+			}
+		}
+		for _, other := range l.Groups[i+1:] {
+			if gr.Rect.Overlaps(other.Rect) {
+				t.Errorf("groups %s and %s overlap", gr.ID, other.ID)
+			}
+		}
+		if gr.Label != "" && gr.LabelPos.X+float64(len(gr.Label))*6 > gr.Rect.Right()+eps {
+			t.Errorf("group %s label does not fit", gr.ID)
+		}
+	}
+}
+
 func sideOf(d diagram.Direction, r diagram.Rect, p diagram.Point) string {
 	switch {
 	case Abs(p.Y-r.Y) < 0.01:

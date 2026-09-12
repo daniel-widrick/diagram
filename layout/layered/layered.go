@@ -104,10 +104,50 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 	breakCycles(nodes, edges)
 	assignRanks(nodes, edges)
 	layers := buildLayers(nodes, edges, frame.Dir.Transposed())
-	order(layers)
+	groupOf := map[*node]string{}
+	for _, n := range nodes {
+		groupOf[n] = n.pn.Group
+	}
+	for _, ed := range edges {
+		// Dummies of an edge inside one group belong to that group.
+		if ed.from.pn.Group != "" && ed.from.pn.Group == ed.to.pn.Group {
+			for _, d := range ed.chain {
+				groupOf[d] = ed.from.pn.Group
+			}
+		}
+	}
+	order(layers, groupOf)
+	var cls map[string]int
+	var orderedGroups []diagram.Group
+	if len(g.Groups) > 0 {
+		var gn []diagram.GroupNode
+		for _, l := range layers {
+			for _, nd := range l {
+				ord := 0.0
+				if len(l) > 1 {
+					ord = float64(nd.order) / float64(len(l)-1)
+				}
+				gn = append(gn, diagram.GroupNode{ID: nd.id, Group: groupOf[nd], Dummy: nd.pn == nil, Layer: nd.layer, Order: ord})
+			}
+		}
+		cls, orderedGroups = diagram.AssignClasses(gn, g.Groups)
+		// Re-sort every layer by class so groups occupy contiguous bands in
+		// a consistent left-to-right order on every layer.
+		for _, l := range layers {
+			sort.SliceStable(l, func(i, j int) bool { return cls[l[i].id] < cls[l[j].id] })
+			for i, nd := range l {
+				nd.order = i
+			}
+		}
+	}
 	assignCrossBK(layers, nodeSep)
 
 	// Rank axis positions per layer.
+	labelExt := diagram.GroupLabelExtent(g.Groups, o)
+	groupExtra := 0.0
+	if len(g.Groups) > 0 {
+		groupExtra = diagram.GroupPad + labelExt
+	}
 	layerExt := make([]float64, len(layers))
 	for i, l := range layers {
 		for _, nd := range l {
@@ -117,7 +157,7 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 		}
 	}
 	layerStart := make([]float64, len(layers))
-	r := margin
+	r := margin + groupExtra
 	for i := range layers {
 		layerStart[i] = r
 		gap := rankSep / 2
@@ -126,10 +166,26 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 		}
 		r += layerExt[i] + gap
 	}
-	totalRank := r - rankSep/2 + margin
+	totalRank := r - rankSep/2 + margin + groupExtra
+
+	// Groups: shift whole classes apart so each box holds only its members.
+	var gnodes []diagram.GroupNode
+	if len(g.Groups) > 0 {
+		for _, l := range layers {
+			for _, nd := range l {
+				rs := layerStart[nd.layer] + (layerExt[nd.layer]-nd.rank)/2
+				gnodes = append(gnodes, diagram.GroupNode{ID: nd.id, Group: groupOf[nd], Dummy: nd.pn == nil, Layer: nd.layer, C: &nd.c, Cross: nd.cross, RStart: rs, REnd: rs + nd.rank})
+			}
+		}
+	}
+	boxes := diagram.SeparateClasses(gnodes, cls, orderedGroups, nodeSep, labelExt, !frame.Dir.Transposed())
 
 	// Cross extent.
 	minC, maxC := math.Inf(1), math.Inf(-1)
+	for _, b := range boxes {
+		minC = math.Min(minC, b.MinC)
+		maxC = math.Max(maxC, b.MaxC)
+	}
 	for _, l := range layers {
 		for _, nd := range l {
 			if v := nd.c - nd.cross/2; v < minC {
@@ -152,6 +208,7 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 	frame.Total = diagram.Size{W: maxC - minC + 2*margin, H: totalRank}
 
 	out := &diagram.Layout{Size: frame.Size(), HiddenNodes: hiddenIDs}
+	out.Groups = diagram.FinishGroups(orderedGroups, boxes, frame, dc, o)
 	for _, l := range layers {
 		for _, nd := range l {
 			nd.c += dc
@@ -518,10 +575,45 @@ func buildLayers(nodes []*node, edges []*edge, transposed bool) [][]*node {
 
 // order reduces crossings with barycenter sweeps followed by adjacent
 // swaps, keeping the best ordering seen.
-func order(layers [][]*node) {
+func order(layers [][]*node, groupOf map[*node]string) {
 	if len(layers) < 2 {
 		return
 	}
+	// Members of a group must stay contiguous within a layer so the group
+	// box does not swallow outsiders; regroup after every sort.
+	contiguous := func() {
+		for _, l := range layers {
+			first := map[string]int{}
+			for i, n := range l {
+				if g := groupOf[n]; g != "" {
+					if _, ok := first[g]; !ok {
+						first[g] = i
+					}
+				}
+			}
+			keys := make([]int, len(l))
+			for i, n := range l {
+				keys[i] = i
+				if g := groupOf[n]; g != "" {
+					keys[i] = first[g]
+				}
+			}
+			idx := make([]int, len(l))
+			for i := range idx {
+				idx[i] = i
+			}
+			sort.SliceStable(idx, func(a, b int) bool { return keys[idx[a]] < keys[idx[b]] })
+			sorted := make([]*node, len(l))
+			for i, k := range idx {
+				sorted[i] = l[k]
+			}
+			copy(l, sorted)
+			for i, n := range l {
+				n.order = i
+			}
+		}
+	}
+	contiguous()
 	best := totalCrossings(layers)
 	bestOrder := snapshot(layers)
 	for iter := 0; iter < 24; iter++ {
@@ -534,7 +626,9 @@ func order(layers [][]*node) {
 				sortByBarycenter(layers[l], func(n *node) []*node { return n.succs })
 			}
 		}
+		contiguous()
 		transpose(layers)
+		contiguous()
 		if c := totalCrossings(layers); c < best {
 			best = c
 			bestOrder = snapshot(layers)
