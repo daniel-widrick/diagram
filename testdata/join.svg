@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1086.16 192.4" width="1086.16" height="192.4">
+  <title>Join graph</title>
+  <defs>
+    <marker id="dg-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0,0 L8,4 L0,8 z" fill="#1b2430"/></marker>
+  </defs>
+  <rect width="1086.16" height="192.4" fill="#ffffff"/>
+  <path d="M148.09,49.1 C171.66,49.1 242.35,49.1 289.48,49.1 C336.61,49.1 407.31,49.1 430.88,49.1" fill="none" stroke="#1b2430" stroke-width="1" stroke-linejoin="round" class="edge"/>
+  <rect x="170.09" y="38.4" width="238.78" height="21.4" rx="3" fill="#ffffff"/>
+  <text x="289.48" y="51.79" text-anchor="middle" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">o.customer_id = c.id · FK · indexed</text>
+  <path d="M609.12,49.1 C633.24,53.02 705.58,64.8 753.81,72.65 C802.04,80.5 874.39,92.27 898.5,96.2" fill="none" stroke="#1b2430" stroke-width="1" stroke-linejoin="round" class="edge"/>
+  <rect x="650.91" y="61.95" width="205.81" height="21.4" rx="3" fill="#ffffff"/>
+  <text x="753.81" y="75.34" text-anchor="middle" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">oi.order_id = o.id · FK · pkey</text>
+  <path d="M586.05,143.3 C614.01,139.37 701.74,127.6 753.81,119.75 C805.89,111.9 874.39,100.12 898.5,96.2" fill="none" stroke="#c94a34" stroke-width="1" stroke-linejoin="round" stroke-dasharray="6 4" class="edge weak"/>
+  <rect x="631.12" y="109.05" width="245.38" height="21.4" rx="3" fill="#ffffff"/>
+  <text x="753.81" y="122.44" text-anchor="middle" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">oi.product_id = p.id · FK · no index</text>
+  <path d="M128.31,143.3 C155.17,143.3 235.21,143.3 289.48,143.3 C343.76,143.3 426.54,143.3 453.95,143.3" fill="none" stroke="#1b2430" stroke-width="1" stroke-linejoin="round" class="edge"/>
+  <rect x="196.47" y="132.6" width="186.03" height="21.4" rx="3" fill="#ffffff"/>
+  <text x="289.48" y="145.99" text-anchor="middle" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">p.category_id = cat.id · FK</text>
+  <g class="node" data-id="customers">
+    <rect x="16" y="16" width="132.09" height="66.2" rx="4" fill="#eef1f5" stroke="#1b2430"/>
+    <text x="26" y="37.73" fill="#1b2430" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" font-weight="700" xml:space="preserve">customers</text>
+    <text x="26" y="53.13" fill="#1b2430" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">Index Scan · pkey</text>
+    <text x="26" y="68.53" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">1 row</text>
+  </g>
+  <g class="node" data-id="categories">
+    <rect x="35.78" y="117.9" width="92.53" height="50.8" rx="4" fill="#eef1f5" stroke="#1b2430"/>
+    <text x="45.78" y="139.63" fill="#1b2430" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" font-weight="700" xml:space="preserve">categories</text>
+    <text x="45.78" y="155.03" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">not scanned</text>
+  </g>
+  <g class="node" data-id="orders">
+    <rect x="430.88" y="16" width="178.25" height="66.2" rx="4" fill="#eef1f5" stroke="#1b2430"/>
+    <text x="440.88" y="37.73" fill="#1b2430" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" font-weight="700" xml:space="preserve">orders</text>
+    <text x="440.88" y="53.13" fill="#1b2430" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">Index Scan · customer_id</text>
+    <text x="440.88" y="68.53" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">8,109 rows</text>
+  </g>
+  <g class="node" data-id="products">
+    <rect x="453.95" y="110.2" width="132.09" height="66.2" rx="4" fill="#eef1f5" stroke="#1b2430"/>
+    <text x="463.95" y="131.93" fill="#1b2430" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" font-weight="700" xml:space="preserve">products</text>
+    <text x="463.95" y="147.33" fill="#1b2430" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">Index Scan · pkey</text>
+    <text x="463.95" y="162.73" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">1 row</text>
+  </g>
+  <g class="node hot" data-id="order_items">
+    <rect x="898.5" y="63.1" width="171.66" height="66.2" rx="4" fill="#c94a34" stroke="#c94a34"/>
+    <text x="908.5" y="84.83" fill="#ffffff" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" font-weight="700" xml:space="preserve">order_items</text>
+    <text x="908.5" y="100.23" fill="#ffffff" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">Seq Scan · 750,000 rows</text>
+    <text x="908.5" y="115.63" fill="#ffffff" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">83% of time</text>
+  </g>
+</svg>

@@ -19,10 +19,20 @@ diagram         core types: Graph, Node, Edge, Line, Layout
 text            font measurement (Go fonts embedded; any TTF/OTF can be added),
                 middle ellipsis, wrapping
 layout/tree     tidy tree layout (Buchheim, Junger and Leipert) for nodes of
-                any size, top-down or bottom-up, with edge labels that never
-                collide with sibling edges
+                any size, with edge labels that never collide with sibling edges
+layout/layered  layered layout for general directed graphs (Sugiyama): cycles
+                broken by reversing back edges, longest-path ranking, dummy
+                nodes for long edges, labels on their own interleaved ranks,
+                barycenter crossing reduction with adjacent swaps, relaxed
+                coordinate assignment, curved routing, self loops
+spec            JSON graph description shared by the CLI and other languages
 render/svg      SVG renderer with themes: literal colours or CSS custom properties
 cmd/diagram     CLI: JSON in, SVG out
+
+Both layouts support all four directions: top-down, bottom-up, left-to-right
+and right-to-left. Layouts work in an abstract (cross, rank) frame and
+`diagram.Frame` maps the result, so a direction is a coordinate mapping
+rather than a second code path.
 ```
 
 ## Example
@@ -50,9 +60,12 @@ Or from the command line:
 
 ```sh
 go run github.com/daniel-widrick/diagram/cmd/diagram@latest -title "Plan tree" < testdata/plan.json > plan.svg
+go run github.com/daniel-widrick/diagram/cmd/diagram@latest -layout layered < testdata/join.json > join.svg
 ```
 
 ![Plan tree example](testdata/plan.svg)
+
+![Join graph example](testdata/join.svg)
 
 ## Fonts
 
@@ -64,13 +77,21 @@ put the same family first in the theme's font stack. A node whose label was
 measured elsewhere, for example in a browser with `measureText`, can pass
 its size in `Node.Size` and skips measurement.
 
+## Testing
+
+Every layout is checked against invariants on random inputs in all four
+directions: nodes never overlap and stay inside the drawing, every line fits
+its node, edge endpoints sit on node borders, labels stay inside the drawing
+and clear of every node and of each other, tree parents are centred over
+their children, and layered edges run forward along the rank axis unless
+they were reversed to break a cycle. Golden SVG files cover the renderer.
+
 ## Status
 
-Tree layout is complete and tested with invariants (no overlaps, parents
-centred over children, labels inside boxes and clear of sibling edges) on
-random trees. Layered layout for general directed graphs (the Sugiyama
-pipeline) is next. Left-to-right direction and a web component renderer are
-planned.
+Tree and layered layouts are complete. Planned: ports so edges leave a node
+from spread points rather than its centre, orthogonal edge routing as an
+option for layered graphs, a web component renderer, and Brandes-Köpf
+coordinate assignment for straighter long edges.
 
 Built first for [pginspect](https://github.com/daniel-widrick/pginspect),
 where it draws query plan trees.

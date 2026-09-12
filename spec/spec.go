@@ -12,7 +12,7 @@ import (
 
 // Graph is the JSON shape.
 type Graph struct {
-	// Direction is "topdown" (default) or "bottomup".
+	// Direction is "topdown" (default), "bottomup", "leftright" or "rightleft".
 	Direction string  `json:"direction,omitempty"`
 	RankSep   float64 `json:"rankSep,omitempty"`
 	NodeSep   float64 `json:"nodeSep,omitempty"`
@@ -59,6 +59,10 @@ func (sp Graph) Graph() (*diagram.Graph, error) {
 	case "", "topdown":
 	case "bottomup":
 		g.Direction = diagram.BottomUp
+	case "leftright":
+		g.Direction = diagram.LeftRight
+	case "rightleft":
+		g.Direction = diagram.RightLeft
 	default:
 		return nil, fmt.Errorf("spec: unknown direction %q", sp.Direction)
 	}

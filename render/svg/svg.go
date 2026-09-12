@@ -138,11 +138,15 @@ func Render(l *diagram.Layout, o Options) string {
 			dash = ks.StrokeDash
 		}
 		w := minS + clamp(e.Weight)*(maxS-minS)
-		var pts []string
-		for _, p := range e.Path {
-			pts = append(pts, f(p.X)+","+f(p.Y))
+		if e.Curved && len(e.Path) > 2 {
+			fmt.Fprintf(&b, `  <path d="%s" fill="none" stroke="%s" stroke-width="%s" stroke-linejoin="round"`, smoothPath(e.Path), stroke, f(w))
+		} else {
+			var pts []string
+			for _, p := range e.Path {
+				pts = append(pts, f(p.X)+","+f(p.Y))
+			}
+			fmt.Fprintf(&b, `  <polyline points="%s" fill="none" stroke="%s" stroke-width="%s" stroke-linejoin="round"`, strings.Join(pts, " "), stroke, f(w))
 		}
-		fmt.Fprintf(&b, `  <polyline points="%s" fill="none" stroke="%s" stroke-width="%s" stroke-linejoin="round"`, strings.Join(pts, " "), stroke, f(w))
 		if dash != "" {
 			fmt.Fprintf(&b, ` stroke-dasharray="%s"`, dash)
 		}
@@ -162,6 +166,10 @@ func Render(l *diagram.Layout, o Options) string {
 		b.WriteString("/>\n")
 		if e.Label != nil {
 			st, _ := styles.Get(e.Label.Style)
+			if e.Label.Background && th.Background != "" {
+				bx := e.Label.Box
+				fmt.Fprintf(&b, `  <rect x="%s" y="%s" width="%s" height="%s" rx="3" fill="%s"/>`+"\n", f(bx.X), f(bx.Y), f(bx.W), f(bx.H), labelBackground(th))
+			}
 			fmt.Fprintf(&b, `  <text x="%s" y="%s" text-anchor="%s" fill="%s" %s xml:space="preserve">%s</text>`+"\n",
 				f(e.Label.Pos.X), f(e.Label.Pos.Y+e.Label.Baseline), e.Label.Anchor, th.EdgeLabel, fontAttrs(th, st), html.EscapeString(e.Label.Text))
 		}
@@ -212,6 +220,33 @@ func Render(l *diagram.Layout, o Options) string {
 	}
 	b.WriteString("</svg>\n")
 	return b.String()
+}
+
+// labelBackground is the colour painted behind labels that sit on an edge.
+// A transparent theme background cannot hide the line, so fall back to the
+// node fill, which is opaque in every theme.
+func labelBackground(th Theme) string {
+	if th.Background == "transparent" || th.Background == "none" {
+		return th.Node.Fill
+	}
+	return th.Background
+}
+
+// smoothPath draws a Catmull-Rom spline through the points as cubic
+// Béziers, so routed edges bend gently instead of kinking at each dummy.
+func smoothPath(pts []diagram.Point) string {
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "M%s,%s", f(pts[0].X), f(pts[0].Y))
+	for i := 0; i+1 < len(pts); i++ {
+		p0 := pts[max(i-1, 0)]
+		p1 := pts[i]
+		p2 := pts[i+1]
+		p3 := pts[min(i+2, len(pts)-1)]
+		c1 := diagram.Point{X: p1.X + (p2.X-p0.X)/6, Y: p1.Y + (p2.Y-p0.Y)/6}
+		c2 := diagram.Point{X: p2.X - (p3.X-p1.X)/6, Y: p2.Y - (p3.Y-p1.Y)/6}
+		fmt.Fprintf(&sb, " C%s,%s %s,%s %s,%s", f(c1.X), f(c1.Y), f(c2.X), f(c2.Y), f(p2.X), f(p2.Y))
+	}
+	return sb.String()
 }
 
 func merge(base, over KindStyle) KindStyle {

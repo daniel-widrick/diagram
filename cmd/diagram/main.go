@@ -1,6 +1,7 @@
 // Command diagram lays out a graph described in JSON and writes SVG.
 //
 //	diagram -layout tree -theme tokens < graph.json > out.svg
+//	diagram -layout layered < join.json > join.svg
 //
 // The JSON shape is:
 //
@@ -19,6 +20,7 @@ import (
 	"os"
 
 	"github.com/daniel-widrick/diagram"
+	"github.com/daniel-widrick/diagram/layout/layered"
 	"github.com/daniel-widrick/diagram/layout/tree"
 	"github.com/daniel-widrick/diagram/render/svg"
 	"github.com/daniel-widrick/diagram/spec"
@@ -26,7 +28,7 @@ import (
 )
 
 func main() {
-	layoutName := flag.String("layout", "tree", "layout algorithm: tree")
+	layoutName := flag.String("layout", "tree", "layout algorithm: tree or layered")
 	themeName := flag.String("theme", "default", "theme: default or tokens (CSS variables)")
 	title := flag.String("title", "", "accessible title")
 	inline := flag.Bool("inline", false, "omit the XML declaration for inlining in HTML")
@@ -46,6 +48,8 @@ func main() {
 	switch *layoutName {
 	case "tree":
 		l, err = tree.Layout(g, opts)
+	case "layered":
+		l, err = layered.Layout(g, opts)
 	default:
 		err = fmt.Errorf("unknown layout %q", *layoutName)
 	}

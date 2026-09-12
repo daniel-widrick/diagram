@@ -1,0 +1,16 @@
+{
+  "direction": "leftright",
+  "nodes": [
+    {"id": "customers", "lines": [[{"text": "customers", "style": "title"}], [{"text": "Index Scan · pkey", "style": "detail"}], [{"text": "1 row", "style": "muted"}]]},
+    {"id": "orders", "lines": [[{"text": "orders", "style": "title"}], [{"text": "Index Scan · customer_id", "style": "detail"}], [{"text": "8,109 rows", "style": "muted"}]]},
+    {"id": "order_items", "kind": "hot", "lines": [[{"text": "order_items", "style": "title"}], [{"text": "Seq Scan · 750,000 rows", "style": "detail"}], [{"text": "83% of time", "style": "detail"}]]},
+    {"id": "products", "lines": [[{"text": "products", "style": "title"}], [{"text": "Index Scan · pkey", "style": "detail"}], [{"text": "1 row", "style": "muted"}]]},
+    {"id": "categories", "lines": [[{"text": "categories", "style": "title"}], [{"text": "not scanned", "style": "muted"}]]}
+  ],
+  "edges": [
+    {"from": "customers", "to": "orders", "label": "o.customer_id = c.id · FK · indexed", "arrow": "none"},
+    {"from": "orders", "to": "order_items", "label": "oi.order_id = o.id · FK · pkey", "arrow": "none"},
+    {"from": "products", "to": "order_items", "label": "oi.product_id = p.id · FK · no index", "kind": "weak", "arrow": "none"},
+    {"from": "categories", "to": "products", "label": "p.category_id = cat.id · FK", "arrow": "none"}
+  ]
+}

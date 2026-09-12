@@ -1,11 +1,13 @@
 // Package tree lays out rooted trees (or forests) with the Buchheim, Jünger
 // and Leipert linear-time refinement of Walker's algorithm, extended to nodes
-// of different widths. Parents are centred over their children, siblings keep
+// of different sizes. Parents are centred over their children, siblings keep
 // the configured separation, and subtrees are packed as tightly as their
 // contours allow.
 //
 // Edges must run parent to child (Edge.From is the parent). The arrow
-// direction is independent and comes from Edge.Arrow.
+// direction is independent and comes from Edge.Arrow. All four directions
+// are supported; the algorithm works in an abstract (cross, rank) frame and
+// diagram.Frame maps the result to x and y.
 package tree
 
 import (
@@ -22,16 +24,26 @@ type node struct {
 	number   int // index among siblings
 	depth    int
 
+	cross, rank float64 // extents in the abstract frame
+
 	// Buchheim state
 	prelim, mod, shift, change float64
 	thread                     *node
 	ancestor                   *node
 
-	x float64 // final centre x
+	c float64 // final centre on the cross axis
 
-	// space needed to the right for an incoming edge label
-	labelW float64
+	// extra separation needed after this node for its incoming edge label
+	labelSep float64
 }
+
+type edgeInfo struct {
+	edge                        *diagram.Edge
+	labelW, labelH, labelAscent float64
+}
+
+// labelGap is the gap between an edge segment and its label.
+const labelGap = 6
 
 // Layout positions the graph as a tree. Nodes with no incoming edge are
 // roots; several roots are laid out side by side.
@@ -49,6 +61,8 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 	if margin <= 0 {
 		margin = 16
 	}
+	frame := diagram.Frame{Dir: g.Direction}
+	transposed := g.Direction.Transposed()
 
 	// Measure.
 	byID := map[string]*node{}
@@ -62,18 +76,15 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 			return nil, err
 		}
 		nd := &node{pn: pn}
+		nd.cross, nd.rank = frame.NodeSize(pn.Rect)
 		nd.ancestor = nd
 		byID[n.ID] = nd
 		all = append(all, nd)
 	}
 
 	// Build hierarchy in edge order.
-	type edgeInfo struct {
-		edge           *diagram.Edge
-		labelW, labelH float64
-		labelAscent    float64
-	}
 	edges := map[*node]*edgeInfo{} // by child
+	maxLabelW := 0.0
 	for _, e := range g.Edges {
 		p, ok := byID[e.From]
 		if !ok {
@@ -95,7 +106,14 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 				return nil, err
 			}
 			info.labelW, info.labelH, info.labelAscent = w, h, a
-			c.labelW = w + labelGap
+			if !transposed {
+				// Label sits to the right of the child's vertical segment; the
+				// next sibling's segment must clear it.
+				c.labelSep = w + 2*labelGap
+			}
+			if w > maxLabelW {
+				maxLabelW = w
+			}
 		}
 		edges[c] = info
 	}
@@ -105,7 +123,6 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 			roots = append(roots, nd)
 		}
 	}
-	// Cycle check: every node must reach a root.
 	for _, nd := range all {
 		seen := 0
 		for p := nd; p != nil; p = p.parent {
@@ -116,7 +133,16 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 		}
 	}
 
-	// A virtual root makes a forest a tree.
+	// Sideways layouts put labels above the run into the child, so the gap
+	// between levels must hold the widest label.
+	elbow := 0.0 // distance from the parent's far edge to the elbow
+	if transposed {
+		elbow = 14
+		if need := maxLabelW + elbow + 2*labelGap + 4; need > rankSep {
+			rankSep = need
+		}
+	}
+
 	virtual := &node{pn: &diagram.PlacedNode{Node: &diagram.Node{ID: "\x00root"}}}
 	virtual.ancestor = virtual
 	virtual.children = roots
@@ -124,116 +150,110 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 		r.parent = virtual
 	}
 	number(virtual, -1)
-
-	sep := nodeSep
-	firstWalk(virtual, sep)
+	firstWalk(virtual, nodeSep)
 	secondWalk(virtual, -virtual.prelim)
 
-	// Levels: depth -> max height.
-	levelH := map[int]float64{}
+	// Levels along the rank axis.
+	levelExt := map[int]float64{}
 	maxDepth := 0
 	for _, nd := range all {
-		if h := nd.pn.Rect.H; h > levelH[nd.depth] {
-			levelH[nd.depth] = h
+		if nd.rank > levelExt[nd.depth] {
+			levelExt[nd.depth] = nd.rank
 		}
 		if nd.depth > maxDepth {
 			maxDepth = nd.depth
 		}
 	}
-	levelY := make([]float64, maxDepth+1)
-	y := margin
+	levelStart := make([]float64, maxDepth+1)
+	r := margin
 	for d := 0; d <= maxDepth; d++ {
-		levelY[d] = y
-		y += levelH[d] + rankSep
+		levelStart[d] = r
+		r += levelExt[d] + rankSep
 	}
-	totalH := y - rankSep + margin
+	totalRank := r - rankSep + margin
 
-	// Shift so the leftmost extent (nodes or labels) sits at the margin.
-	minX, maxX := 0.0, 0.0
+	// Cross extent, including labels hanging to the right of children.
+	minC, maxC := 0.0, 0.0
 	for i, nd := range all {
-		l := nd.x - nd.pn.Rect.W/2
-		r := nd.x + nd.pn.Rect.W/2
-		if info := edges[nd]; info != nil && info.labelW > 0 {
-			if lr := nd.x + labelGap + info.labelW; lr > r {
-				r = lr
+		lo := nd.c - nd.cross/2
+		hi := nd.c + nd.cross/2
+		if info := edges[nd]; info != nil && info.labelW > 0 && !transposed {
+			if lr := nd.c + labelGap + info.labelW; lr > hi {
+				hi = lr
 			}
 		}
-		if i == 0 || l < minX {
-			minX = l
+		if i == 0 || lo < minC {
+			minC = lo
 		}
-		if i == 0 || r > maxX {
-			maxX = r
+		if i == 0 || hi > maxC {
+			maxC = hi
 		}
 	}
-	dx := margin - minX
-	totalW := maxX - minX + 2*margin
+	dc := margin - minC
+	totalCross := maxC - minC + 2*margin
+	frame.Total = diagram.Size{W: totalCross, H: totalRank}
 
-	out := &diagram.Layout{Size: diagram.Size{W: totalW, H: totalH}}
+	out := &diagram.Layout{Size: frame.Size()}
 	for _, nd := range all {
 		pn := nd.pn
 		pn.Depth = nd.depth
-		pn.Rect.X = nd.x + dx - pn.Rect.W/2
-		pn.Rect.Y = levelY[nd.depth]
-		if g.Direction == diagram.BottomUp {
-			pn.Rect.Y = totalH - pn.Rect.Y - pn.Rect.H
-		}
+		nd.c += dc
+		rect := frame.Rect(nd.c-nd.cross/2, levelStart[nd.depth], nd.cross, nd.rank)
 		if pn.BarRect != nil {
-			pn.BarRect.X += pn.Rect.X
-			pn.BarRect.Y += pn.Rect.Y
+			pn.BarRect.X += rect.X
+			pn.BarRect.Y += rect.Y
 		}
+		pn.Rect = rect
 		out.Nodes = append(out.Nodes, pn)
 	}
-	// Edges in input order.
+
+	// Edges: parent far edge -> elbow -> child near edge, in the abstract frame.
 	for _, e := range g.Edges {
 		c := byID[e.To]
 		p := c.parent
 		info := edges[c]
 		pe := &diagram.PlacedEdge{Edge: e}
-		pr, cr := p.pn.Rect, c.pn.Rect
-		if g.Direction == diagram.BottomUp {
-			// Parent sits below the child.
-			mid := (cr.Bottom() + pr.Y) / 2
-			pe.Path = []diagram.Point{
-				{X: pr.X + pr.W/2, Y: pr.Y},
-				{X: pr.X + pr.W/2, Y: mid},
-				{X: cr.X + cr.W/2, Y: mid},
-				{X: cr.X + cr.W/2, Y: cr.Bottom()},
-			}
-			if info.labelW > 0 {
-				pe.Label = &diagram.PlacedLabel{
-					Text: e.Label, Style: labelStyle(e), Anchor: "start",
-					Pos:      diagram.Point{X: cr.X + cr.W/2 + labelGap, Y: cr.Bottom() + (mid-cr.Bottom())/2},
-					Baseline: info.labelAscent - info.labelH/2, W: info.labelW, H: info.labelH,
-				}
-			}
-		} else {
-			mid := (pr.Bottom() + cr.Y) / 2
-			pe.Path = []diagram.Point{
-				{X: pr.X + pr.W/2, Y: pr.Bottom()},
-				{X: pr.X + pr.W/2, Y: mid},
-				{X: cr.X + cr.W/2, Y: mid},
-				{X: cr.X + cr.W/2, Y: cr.Y},
-			}
-			if info.labelW > 0 {
-				pe.Label = &diagram.PlacedLabel{
-					Text: e.Label, Style: labelStyle(e), Anchor: "start",
-					Pos:      diagram.Point{X: cr.X + cr.W/2 + labelGap, Y: mid + (cr.Y-mid)/2},
-					Baseline: info.labelAscent - info.labelH/2, W: info.labelW, H: info.labelH,
-				}
-			}
+		// Elbows sit past the whole parent level, not just this parent, so
+		// labels on the far side never overlap a taller node at that level.
+		pEnd := levelStart[p.depth] + p.rank
+		levelEnd := levelStart[p.depth] + levelExt[p.depth]
+		cStart := levelStart[c.depth]
+		mid := (levelEnd + cStart) / 2
+		if transposed {
+			mid = levelEnd + elbow
 		}
-		// Collapse the elbow when parent and child are vertically aligned.
-		if abs(pe.Path[0].X-pe.Path[3].X) < 0.5 {
-			pe.Path = []diagram.Point{pe.Path[0], pe.Path[3]}
+		pts := [][2]float64{{p.c, pEnd}, {p.c, mid}, {c.c, mid}, {c.c, cStart}}
+		if abs(p.c-c.c) < 0.5 {
+			pts = [][2]float64{{p.c, pEnd}, {c.c, cStart}}
+		}
+		for _, q := range pts {
+			pe.Path = append(pe.Path, frame.Point(q[0], q[1]))
+		}
+		if info.labelW > 0 {
+			var box diagram.Rect
+			if transposed {
+				// Above the run from the elbow into the child, centred on it.
+				runStart, runEnd := mid+labelGap, cStart-labelGap
+				centre := (runStart + runEnd) / 2
+				box = frame.Rect(c.c-labelGap-info.labelH, centre-info.labelW/2, info.labelH, info.labelW)
+				// frame.Rect swaps extents for transposed directions, so pass
+				// (cross extent, rank extent) = (labelH, labelW).
+			} else {
+				centre := (mid + cStart) / 2
+				box = frame.Rect(c.c+labelGap, centre-info.labelH/2, info.labelW, info.labelH)
+			}
+			pe.Label = &diagram.PlacedLabel{
+				Text: e.Label, Style: labelStyle(e), Anchor: "middle",
+				Pos:      box.Center(),
+				Baseline: info.labelAscent - info.labelH/2,
+				Box:      box,
+			}
 		}
 		out.Edges = append(out.Edges, pe)
 	}
 	sort.SliceStable(out.Nodes, func(i, j int) bool { return out.Nodes[i].Depth < out.Nodes[j].Depth })
 	return out, nil
 }
-
-// labelGap is the horizontal gap between an edge's vertical segment and its label.
-const labelGap = 6
 
 func labelStyle(e *diagram.Edge) string {
 	if e.LabelStyle != "" {
@@ -257,11 +277,12 @@ func number(v *node, depth int) {
 	}
 }
 
-// distance is the required gap between the centres of two adjacent nodes.
-// The left node's incoming edge label must clear the right node's edge.
+// distance is the required gap between the centres of two adjacent nodes on
+// the cross axis. A label hanging off the left node's edge pushes the right
+// node away.
 func distance(left, right *node, sep float64) float64 {
-	d := left.pn.Rect.W/2 + sep + right.pn.Rect.W/2
-	if lw := left.labelW + labelGap; lw > d {
+	d := left.cross/2 + sep + right.cross/2
+	if lw := left.labelSep; lw > d {
 		d = lw
 	}
 	return d
@@ -385,7 +406,7 @@ func ancestor(vim, v, defaultAncestor *node) *node {
 }
 
 func secondWalk(v *node, m float64) {
-	v.x = v.prelim + m
+	v.c = v.prelim + m
 	for _, c := range v.children {
 		secondWalk(c, m+v.mod)
 	}

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/daniel-widrick/diagram"
+	"github.com/daniel-widrick/diagram/layout/layered"
 	"github.com/daniel-widrick/diagram/layout/tree"
 	"github.com/daniel-widrick/diagram/spec"
 	"github.com/daniel-widrick/diagram/text"
@@ -59,6 +60,34 @@ func TestGoldenPlan(t *testing.T) {
 	}
 	if strings.Count(got, "<rect") < len(g.Nodes)+1 {
 		t.Error("expected a rect per node plus background")
+	}
+}
+
+func TestGoldenJoin(t *testing.T) {
+	g := loadSpec(t, filepath.Join("..", "..", "testdata", "join.json"))
+	opts := diagram.Options{Measurer: text.NewGoFonts(), Styles: text.DefaultStyles()}
+	l, err := layered.Layout(g, opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := Render(l, Options{Theme: Default(), Styles: opts.Styles, Title: "Join graph"})
+	golden := filepath.Join("..", "..", "testdata", "join.svg")
+	if *update {
+		if err := os.WriteFile(golden, []byte(got), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	want, err := os.ReadFile(golden)
+	if err != nil {
+		t.Fatalf("%v (run with -update to create)", err)
+	}
+	if string(want) != got {
+		t.Errorf("rendered SVG differs from %s (run go test ./... -update after checking the change)", golden)
+	}
+	for _, want := range []string{`<path d="M`, `stroke-dasharray="6 4"`, `class="edge weak"`, `rx="3"`} {
+		if !strings.Contains(got, want) {
+			t.Errorf("missing %q", want)
+		}
 	}
 }
 

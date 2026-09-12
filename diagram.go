@@ -116,13 +116,19 @@ type Edge struct {
 	Data   any
 }
 
-// Direction is the main flow of a layout.
+// Direction is the main flow of a layout: where children (tree) or edge
+// targets (layered) go relative to their parents or sources.
 type Direction int
 
 const (
 	TopDown Direction = iota
 	BottomUp
+	LeftRight
+	RightLeft
 )
+
+// Transposed reports whether the rank axis is horizontal.
+func (d Direction) Transposed() bool { return d == LeftRight || d == RightLeft }
 
 // Graph is the input to a layout.
 type Graph struct {
@@ -166,14 +172,18 @@ type PlacedNode struct {
 	Depth int
 }
 
-// PlacedLabel is an edge label with its anchor.
+// PlacedLabel is an edge label. Box is the space reserved for it; Pos is
+// the text anchor (the box centre) and the baseline sits at Pos.Y+Baseline.
 type PlacedLabel struct {
 	Text     string
 	Style    string
-	Pos      Point  // anchor point; Anchor says how text hangs from it
-	Anchor   string // "start", "middle" or "end"
+	Pos      Point
+	Anchor   string // always "middle" for now
 	Baseline float64
-	W, H     float64
+	Box      Rect
+	// Background asks the renderer to paint the box in the background
+	// colour, because the edge passes underneath the label.
+	Background bool
 }
 
 // PlacedEdge is an edge with its routed path.
@@ -181,6 +191,12 @@ type PlacedEdge struct {
 	*Edge
 	Path  []Point
 	Label *PlacedLabel
+	// Curved asks the renderer to draw a smooth curve through Path rather
+	// than straight segments.
+	Curved bool
+	// Reversed is set by layered layouts when the edge was flipped to break
+	// a cycle; Path still runs From to To.
+	Reversed bool
 }
 
 // Layout is the geometry produced by a layout algorithm.

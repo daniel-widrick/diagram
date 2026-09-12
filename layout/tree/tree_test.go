@@ -7,85 +7,12 @@ import (
 	"testing"
 
 	"github.com/daniel-widrick/diagram"
+	"github.com/daniel-widrick/diagram/internal/check"
 	"github.com/daniel-widrick/diagram/text"
 )
 
 func opts() diagram.Options {
 	return diagram.Options{Measurer: text.NewGoFonts(), Styles: text.DefaultStyles()}
-}
-
-// checkInvariants verifies what any tree layout must satisfy.
-func checkInvariants(t *testing.T, g *diagram.Graph, l *diagram.Layout) {
-	t.Helper()
-	// No two nodes overlap, and every node is inside the drawing.
-	for i, a := range l.Nodes {
-		if a.Rect.X < 0 || a.Rect.Y < 0 || a.Rect.Right() > l.Size.W+0.01 || a.Rect.Bottom() > l.Size.H+0.01 {
-			t.Errorf("node %s outside drawing: %+v in %+v", a.ID, a.Rect, l.Size)
-		}
-		for _, b := range l.Nodes[i+1:] {
-			if a.Rect.Overlaps(b.Rect) {
-				t.Errorf("nodes %s and %s overlap: %+v %+v", a.ID, b.ID, a.Rect, b.Rect)
-			}
-		}
-		// Every line fits inside its node.
-		for _, ln := range a.Lines {
-			if ln.W > a.Rect.W-2*a.Padding+0.01 {
-				t.Errorf("node %s line %q wider than node: %v > %v", a.ID, ln.Spans[0].Text, ln.W, a.Rect.W-2*a.Padding)
-			}
-		}
-	}
-	// Parents are centred over their children; children are below (or above) parents.
-	children := map[string][]*diagram.PlacedNode{}
-	for _, e := range g.Edges {
-		children[e.From] = append(children[e.From], l.Node(e.To))
-	}
-	for pid, kids := range children {
-		p := l.Node(pid)
-		lo, hi := kids[0].Rect.Center().X, kids[0].Rect.Center().X
-		for _, k := range kids {
-			cx := k.Rect.Center().X
-			if cx < lo {
-				lo = cx
-			}
-			if cx > hi {
-				hi = cx
-			}
-			if g.Direction == diagram.BottomUp {
-				if k.Rect.Bottom() > p.Rect.Y+0.01 {
-					t.Errorf("child %s not above parent %s", k.ID, pid)
-				}
-			} else if k.Rect.Y < p.Rect.Bottom()-0.01 {
-				t.Errorf("child %s not below parent %s", k.ID, pid)
-			}
-		}
-		if mid := (lo + hi) / 2; abs(mid-p.Rect.Center().X) > 0.01 {
-			t.Errorf("parent %s not centred over children: %v vs %v", pid, p.Rect.Center().X, mid)
-		}
-	}
-	// Edge endpoints touch their nodes' borders; labels stay inside the drawing
-	// and do not overlap any node.
-	for _, e := range l.Edges {
-		p, c := l.Node(e.From), l.Node(e.To)
-		first, last := e.Path[0], e.Path[len(e.Path)-1]
-		if g.Direction == diagram.BottomUp {
-			if abs(first.Y-p.Rect.Y) > 0.01 || abs(last.Y-c.Rect.Bottom()) > 0.01 {
-				t.Errorf("edge %s->%s endpoints off border", e.From, e.To)
-			}
-		} else if abs(first.Y-p.Rect.Bottom()) > 0.01 || abs(last.Y-c.Rect.Y) > 0.01 {
-			t.Errorf("edge %s->%s endpoints off border", e.From, e.To)
-		}
-		if e.Label != nil {
-			lr := diagram.Rect{X: e.Label.Pos.X, Y: e.Label.Pos.Y - e.Label.H/2, W: e.Label.W, H: e.Label.H}
-			if lr.Right() > l.Size.W+0.01 {
-				t.Errorf("label %q past right edge", e.Label.Text)
-			}
-			for _, n := range l.Nodes {
-				if lr.Overlaps(n.Rect) {
-					t.Errorf("label %q overlaps node %s", e.Label.Text, n.ID)
-				}
-			}
-		}
-	}
 }
 
 func planGraph() *diagram.Graph {
@@ -109,17 +36,43 @@ func planGraph() *diagram.Graph {
 	}
 }
 
+// checkTree adds tree-specific invariants to the shared ones: parents are
+// centred over their children on the cross axis.
+func checkTree(t *testing.T, g *diagram.Graph, l *diagram.Layout) {
+	t.Helper()
+	check.Layout(t, g, l)
+	children := map[string][]*diagram.PlacedNode{}
+	for _, e := range g.Edges {
+		children[e.From] = append(children[e.From], l.Node(e.To))
+	}
+	for pid, kids := range children {
+		p := l.Node(pid)
+		lo, hi := check.Cross(g.Direction, kids[0].Rect.Center()), check.Cross(g.Direction, kids[0].Rect.Center())
+		for _, k := range kids {
+			c := check.Cross(g.Direction, k.Rect.Center())
+			if c < lo {
+				lo = c
+			}
+			if c > hi {
+				hi = c
+			}
+		}
+		if mid := (lo + hi) / 2; check.Abs(mid-check.Cross(g.Direction, p.Rect.Center())) > 0.01 {
+			t.Errorf("parent %s not centred over children: %v vs %v", pid, check.Cross(g.Direction, p.Rect.Center()), mid)
+		}
+	}
+}
+
 func TestPlanTree(t *testing.T) {
 	g := planGraph()
 	l, err := Layout(g, opts())
 	if err != nil {
 		t.Fatal(err)
 	}
-	checkInvariants(t, g, l)
+	checkTree(t, g, l)
 	if len(l.Nodes) != 6 || len(l.Edges) != 5 {
 		t.Fatalf("counts: %d nodes %d edges", len(l.Nodes), len(l.Edges))
 	}
-	// The wide edge label on the left leaf must push the right leaf away.
 	idx, gather := l.Node("idx"), l.Node("gather")
 	if gather.Rect.X <= idx.Rect.Right() {
 		t.Errorf("siblings too close: %+v %+v", idx.Rect, gather.Rect)
@@ -135,16 +88,37 @@ func TestPlanTree(t *testing.T) {
 	}
 }
 
-func TestBottomUp(t *testing.T) {
-	g := planGraph()
-	g.Direction = diagram.BottomUp
-	l, err := Layout(g, opts())
-	if err != nil {
-		t.Fatal(err)
-	}
-	checkInvariants(t, g, l)
-	if l.Node("agg").Rect.Y <= l.Node("seq").Rect.Y {
-		t.Error("root should be at the bottom in BottomUp")
+func TestDirections(t *testing.T) {
+	for _, dir := range []diagram.Direction{diagram.TopDown, diagram.BottomUp, diagram.LeftRight, diagram.RightLeft} {
+		g := planGraph()
+		g.Direction = dir
+		l, err := Layout(g, opts())
+		if err != nil {
+			t.Fatal(err)
+		}
+		checkTree(t, g, l)
+		root, leaf := l.Node("agg"), l.Node("seq")
+		switch dir {
+		case diagram.TopDown:
+			if root.Rect.Y >= leaf.Rect.Y {
+				t.Error("TopDown: root should be above")
+			}
+		case diagram.BottomUp:
+			if root.Rect.Y <= leaf.Rect.Y {
+				t.Error("BottomUp: root should be below")
+			}
+		case diagram.LeftRight:
+			if root.Rect.X >= leaf.Rect.X {
+				t.Error("LeftRight: root should be left")
+			}
+			if l.Size.W <= l.Size.H {
+				t.Errorf("LeftRight plan should be wider than tall: %+v", l.Size)
+			}
+		case diagram.RightLeft:
+			if root.Rect.X <= leaf.Rect.X {
+				t.Error("RightLeft: root should be right")
+			}
+		}
 	}
 }
 
@@ -162,7 +136,7 @@ func TestOverflowPolicies(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	checkInvariants(t, g, l)
+	checkTree(t, g, l)
 	if l.Node("grow").Rect.W <= 160 {
 		t.Error("grow node should be wide")
 	}
@@ -182,7 +156,7 @@ func TestForestAndErrors(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	checkInvariants(t, g, l)
+	checkTree(t, g, l)
 	if l.Node("a").Rect.Y != l.Node("b").Rect.Y {
 		t.Error("two roots should share a level")
 	}
@@ -195,12 +169,12 @@ func TestForestAndErrors(t *testing.T) {
 	}
 }
 
-// TestRandomTrees hammers the invariants on random shapes and sizes.
 func TestRandomTrees(t *testing.T) {
 	rng := rand.New(rand.NewSource(7))
-	for iter := 0; iter < 60; iter++ {
+	dirs := []diagram.Direction{diagram.TopDown, diagram.BottomUp, diagram.LeftRight, diagram.RightLeft}
+	for iter := 0; iter < 80; iter++ {
 		n := 2 + rng.Intn(40)
-		g := &diagram.Graph{}
+		g := &diagram.Graph{Direction: dirs[iter%4]}
 		for i := 0; i < n; i++ {
 			lines := []diagram.Line{diagram.L("title", fmt.Sprintf("n%d %s", i, strings.Repeat("x", 1+rng.Intn(12))))}
 			for j := rng.Intn(3); j > 0; j-- {
@@ -215,13 +189,10 @@ func TestRandomTrees(t *testing.T) {
 				g.Edges = append(g.Edges, e)
 			}
 		}
-		if rng.Intn(2) == 0 {
-			g.Direction = diagram.BottomUp
-		}
 		l, err := Layout(g, opts())
 		if err != nil {
 			t.Fatalf("iter %d: %v", iter, err)
 		}
-		checkInvariants(t, g, l)
+		checkTree(t, g, l)
 	}
 }
