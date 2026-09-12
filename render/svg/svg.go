@@ -162,7 +162,7 @@ func Render(l *diagram.Layout, o Options) string {
 		b.WriteString("/>\n")
 		if e.Label != nil {
 			st, _ := styles.Get(e.Label.Style)
-			fmt.Fprintf(&b, `  <text x="%s" y="%s" text-anchor="%s" fill="%s" %s>%s</text>`+"\n",
+			fmt.Fprintf(&b, `  <text x="%s" y="%s" text-anchor="%s" fill="%s" %s xml:space="preserve">%s</text>`+"\n",
 				f(e.Label.Pos.X), f(e.Label.Pos.Y+e.Label.Baseline), e.Label.Anchor, th.EdgeLabel, fontAttrs(th, st), html.EscapeString(e.Label.Text))
 		}
 	}
@@ -193,7 +193,7 @@ func Render(l *diagram.Layout, o Options) string {
 				if sp.Full != sp.Text {
 					title = "<title>" + html.EscapeString(sp.Full) + "</title>"
 				}
-				fmt.Fprintf(&b, `    <text x="%s" y="%s" fill="%s" %s>%s%s</text>`+"\n",
+				fmt.Fprintf(&b, `    <text x="%s" y="%s" fill="%s" %s xml:space="preserve">%s%s</text>`+"\n",
 					f(n.Rect.X+n.Padding+sp.X), f(n.Rect.Y+ln.Baseline), color, fontAttrs(th, st), title, html.EscapeString(sp.Text))
 			}
 		}

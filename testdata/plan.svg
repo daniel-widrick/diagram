@@ -6,57 +6,57 @@
   </defs>
   <rect width="441.47" height="547.2" fill="#ffffff"/>
   <polyline points="198.01,77.8 198.01,117.8" fill="none" stroke="#1b2430" stroke-width="2.5" stroke-linejoin="round" marker-start="url(#dg-arrow)" class="edge"/>
-  <text x="204.01" y="110.49" text-anchor="start" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11">781 rows</text>
+  <text x="204.01" y="110.49" text-anchor="start" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">781 rows</text>
   <polyline points="198.01,179.6 198.01,219.6" fill="none" stroke="#1b2430" stroke-width="2.5" stroke-linejoin="round" marker-start="url(#dg-arrow)" class="edge"/>
-  <text x="204.01" y="212.29" text-anchor="start" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11">781 rows</text>
+  <text x="204.01" y="212.29" text-anchor="start" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">781 rows</text>
   <polyline points="198.01,281.4 198.01,301.4 108.42,301.4 108.42,321.4" fill="none" stroke="#1b2430" stroke-width="1.15" stroke-linejoin="round" marker-start="url(#dg-arrow)" class="edge"/>
-  <text x="114.42" y="314.09" text-anchor="start" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11">1 row</text>
+  <text x="114.42" y="314.09" text-anchor="start" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">1 row</text>
   <polyline points="198.01,281.4 198.01,301.4 287.59,301.4 287.59,321.4" fill="none" stroke="#1b2430" stroke-width="2.5" stroke-linejoin="round" marker-start="url(#dg-arrow)" class="edge"/>
-  <text x="293.59" y="314.09" text-anchor="start" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11">781 rows</text>
+  <text x="293.59" y="314.09" text-anchor="start" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">781 rows</text>
   <polyline points="287.59,383.2 287.59,438.6" fill="none" stroke="#1b2430" stroke-width="2.5" stroke-linejoin="round" marker-start="url(#dg-arrow)" class="edge"/>
-  <text x="293.59" y="427.44" text-anchor="start" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11">260 rows × 3 workers</text>
+  <text x="293.59" y="427.44" text-anchor="start" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">260 rows × 3 workers</text>
   <g class="node" data-id="agg">
     <rect x="148.45" y="16" width="99.12" height="61.8" rx="4" fill="#eef1f5" stroke="#1b2430"/>
-    <text x="158.45" y="37.73" fill="#1b2430" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" font-weight="700">Aggregate</text>
-    <text x="158.45" y="53.13" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11">0.05 ms · 0%</text>
+    <text x="158.45" y="37.73" fill="#1b2430" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" font-weight="700" xml:space="preserve">Aggregate</text>
+    <text x="158.45" y="53.13" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">0.05 ms · 0%</text>
     <rect x="158.45" y="62.8" width="79.12" height="5" rx="2" fill="#d3dae3"/>
   </g>
   <g class="node" data-id="sort">
     <rect x="141.85" y="117.8" width="112.31" height="61.8" rx="4" fill="#eef1f5" stroke="#1b2430"/>
-    <text x="151.85" y="139.53" fill="#1b2430" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" font-weight="700">Sort </text>
-    <text x="184.82" y="139.53" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11">by p.name</text>
-    <text x="151.85" y="154.93" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11">0.3 ms · 0%</text>
+    <text x="151.85" y="139.53" fill="#1b2430" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" font-weight="700" xml:space="preserve">Sort </text>
+    <text x="184.82" y="139.53" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">by p.name</text>
+    <text x="151.85" y="154.93" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">0.3 ms · 0%</text>
     <rect x="151.85" y="164.6" width="92.31" height="5" rx="2" fill="#d3dae3"/>
     <rect x="151.85" y="164.6" width="0.92" height="5" rx="2" fill="#1f7a8c"/>
   </g>
   <g class="node" data-id="nl">
     <rect x="151.74" y="219.6" width="92.53" height="61.8" rx="4" fill="#eef1f5" stroke="#1b2430"/>
-    <text x="161.74" y="241.33" fill="#1b2430" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" font-weight="700">Nested Loop</text>
-    <text x="161.74" y="256.73" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11">0.1 ms · 0%</text>
+    <text x="161.74" y="241.33" fill="#1b2430" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" font-weight="700" xml:space="preserve">Nested Loop</text>
+    <text x="161.74" y="256.73" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">0.1 ms · 0%</text>
     <rect x="161.74" y="266.4" width="72.53" height="5" rx="2" fill="#d3dae3"/>
   </g>
   <g class="node" data-id="idx">
     <rect x="16" y="321.4" width="184.84" height="77.2" rx="4" fill="#eef1f5" stroke="#1b2430"/>
-    <text x="26" y="343.13" fill="#1b2430" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" font-weight="700">Index Scan</text>
-    <text x="26" y="358.53" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11">products_pkey · p.id = 42</text>
-    <text x="26" y="373.93" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11">0.07 ms · 0%</text>
+    <text x="26" y="343.13" fill="#1b2430" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" font-weight="700" xml:space="preserve">Index Scan</text>
+    <text x="26" y="358.53" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">products_pkey · p.id = 42</text>
+    <text x="26" y="373.93" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">0.07 ms · 0%</text>
     <rect x="26" y="383.6" width="164.84" height="5" rx="2" fill="#d3dae3"/>
   </g>
   <g class="node" data-id="gather">
     <rect x="224.84" y="321.4" width="125.5" height="61.8" rx="4" fill="#eef1f5" stroke="#1b2430"/>
-    <text x="234.84" y="343.13" fill="#1b2430" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" font-weight="700">Gather </text>
-    <text x="281" y="343.13" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11">2 workers</text>
-    <text x="234.84" y="358.53" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11">12.6 ms · 17%</text>
+    <text x="234.84" y="343.13" fill="#1b2430" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" font-weight="700" xml:space="preserve">Gather </text>
+    <text x="281" y="343.13" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">2 workers</text>
+    <text x="234.84" y="358.53" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">12.6 ms · 17%</text>
     <rect x="234.84" y="368.2" width="105.5" height="5" rx="2" fill="#d3dae3"/>
     <rect x="234.84" y="368.2" width="17.94" height="5" rx="2" fill="#1f7a8c"/>
   </g>
   <g class="node hot" data-id="seq">
     <rect x="178.69" y="438.6" width="217.81" height="92.6" rx="4" fill="#c94a34" stroke="#c94a34"/>
-    <text x="188.69" y="460.33" fill="#ffffff" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" font-weight="700">Seq Scan </text>
-    <text x="248.03" y="460.33" fill="#ffffff" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11">order_items</text>
-    <text x="188.69" y="475.73" fill="#ffffff" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11"><title>filter product_id = 42 and status = &#39;shipped&#39;</title>filter product_…us = &#39;shipped&#39;</text>
-    <text x="188.69" y="491.13" fill="#ffffff" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11">62.0 ms · 83% of time</text>
-    <text x="188.69" y="506.53" fill="#ffffff" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11">est 312 · actual 260 rows</text>
+    <text x="188.69" y="460.33" fill="#ffffff" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" font-weight="700" xml:space="preserve">Seq Scan </text>
+    <text x="248.03" y="460.33" fill="#ffffff" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">order_items</text>
+    <text x="188.69" y="475.73" fill="#ffffff" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve"><title>filter product_id = 42 and status = &#39;shipped&#39;</title>filter product_…us = &#39;shipped&#39;</text>
+    <text x="188.69" y="491.13" fill="#ffffff" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">62.0 ms · 83% of time</text>
+    <text x="188.69" y="506.53" fill="#ffffff" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">est 312 · actual 260 rows</text>
     <rect x="188.69" y="516.2" width="197.81" height="5" rx="2" fill="#d3dae3"/>
     <rect x="188.69" y="516.2" width="164.18" height="5" rx="2" fill="#ffffff"/>
   </g>
