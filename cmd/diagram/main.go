@@ -13,7 +13,6 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -22,26 +21,9 @@ import (
 	"github.com/daniel-widrick/diagram"
 	"github.com/daniel-widrick/diagram/layout/tree"
 	"github.com/daniel-widrick/diagram/render/svg"
+	"github.com/daniel-widrick/diagram/spec"
 	"github.com/daniel-widrick/diagram/text"
 )
-
-type spec struct {
-	Direction string  `json:"direction"`
-	RankSep   float64 `json:"rankSep"`
-	NodeSep   float64 `json:"nodeSep"`
-	Nodes     []struct {
-		ID       string           `json:"id"`
-		Kind     string           `json:"kind"`
-		Bar      *float64         `json:"bar"`
-		MaxWidth float64          `json:"maxWidth"`
-		Overflow string           `json:"overflow"`
-		Lines    [][]diagram.Span `json:"lines"`
-	} `json:"nodes"`
-	Edges []struct {
-		From, To, Label, Kind, Arrow string
-		Weight                       float64
-	} `json:"edges"`
-}
 
 func main() {
 	layoutName := flag.String("layout", "tree", "layout algorithm: tree")
@@ -54,38 +36,9 @@ func main() {
 	if err != nil {
 		fatal(err)
 	}
-	var sp spec
-	if err := json.Unmarshal(data, &sp); err != nil {
-		fatal(fmt.Errorf("parse input: %w", err))
-	}
-	g := &diagram.Graph{RankSep: sp.RankSep, NodeSep: sp.NodeSep}
-	if sp.Direction == "bottomup" {
-		g.Direction = diagram.BottomUp
-	}
-	for _, n := range sp.Nodes {
-		nd := &diagram.Node{ID: n.ID, Kind: n.Kind, Bar: n.Bar, MaxWidth: n.MaxWidth}
-		switch n.Overflow {
-		case "ellipsize":
-			nd.Overflow = diagram.Ellipsize
-		case "wrap":
-			nd.Overflow = diagram.Wrap
-		}
-		for _, ln := range n.Lines {
-			nd.Lines = append(nd.Lines, diagram.Line(ln))
-		}
-		g.Nodes = append(g.Nodes, nd)
-	}
-	for _, e := range sp.Edges {
-		ed := &diagram.Edge{From: e.From, To: e.To, Label: e.Label, Kind: e.Kind, Weight: e.Weight}
-		switch e.Arrow {
-		case "backward":
-			ed.Arrow = diagram.ArrowBackward
-		case "none":
-			ed.Arrow = diagram.ArrowNone
-		case "both":
-			ed.Arrow = diagram.ArrowBoth
-		}
-		g.Edges = append(g.Edges, ed)
+	g, err := spec.Decode(data)
+	if err != nil {
+		fatal(err)
 	}
 
 	opts := diagram.Options{Measurer: text.NewGoFonts(), Styles: text.DefaultStyles()}

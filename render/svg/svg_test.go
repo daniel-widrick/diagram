@@ -1,7 +1,6 @@
 package svg
 
 import (
-	"encoding/json"
 	"flag"
 	"os"
 	"path/filepath"
@@ -10,54 +9,21 @@ import (
 
 	"github.com/daniel-widrick/diagram"
 	"github.com/daniel-widrick/diagram/layout/tree"
+	"github.com/daniel-widrick/diagram/spec"
 	"github.com/daniel-widrick/diagram/text"
 )
 
 var update = flag.Bool("update", false, "rewrite golden files")
 
-// loadSpec reads the CLI's JSON shape without importing package main.
 func loadSpec(t *testing.T, path string) *diagram.Graph {
 	t.Helper()
 	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
-	var sp struct {
-		Direction string
-		Nodes     []struct {
-			ID, Kind, Overflow string
-			Bar                *float64
-			MaxWidth           float64
-			Lines              [][]diagram.Span
-		}
-		Edges []struct {
-			From, To, Label, Kind, Arrow string
-			Weight                       float64
-		}
-	}
-	if err := json.Unmarshal(data, &sp); err != nil {
+	g, err := spec.Decode(data)
+	if err != nil {
 		t.Fatal(err)
-	}
-	g := &diagram.Graph{}
-	if sp.Direction == "bottomup" {
-		g.Direction = diagram.BottomUp
-	}
-	for _, n := range sp.Nodes {
-		nd := &diagram.Node{ID: n.ID, Kind: n.Kind, Bar: n.Bar, MaxWidth: n.MaxWidth}
-		if n.Overflow == "ellipsize" {
-			nd.Overflow = diagram.Ellipsize
-		}
-		for _, ln := range n.Lines {
-			nd.Lines = append(nd.Lines, diagram.Line(ln))
-		}
-		g.Nodes = append(g.Nodes, nd)
-	}
-	for _, e := range sp.Edges {
-		ed := &diagram.Edge{From: e.From, To: e.To, Label: e.Label, Kind: e.Kind, Weight: e.Weight}
-		if e.Arrow == "backward" {
-			ed.Arrow = diagram.ArrowBackward
-		}
-		g.Edges = append(g.Edges, ed)
 	}
 	return g
 }
