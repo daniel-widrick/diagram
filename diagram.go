@@ -130,11 +130,22 @@ const (
 // Transposed reports whether the rank axis is horizontal.
 func (d Direction) Transposed() bool { return d == LeftRight || d == RightLeft }
 
+// Routing is how edges are drawn between their waypoints.
+type Routing int
+
+const (
+	// RoutingCurved rounds the corners of the routed path (the default).
+	RoutingCurved Routing = iota
+	// RoutingOrthogonal keeps sharp right-angle corners.
+	RoutingOrthogonal
+)
+
 // Graph is the input to a layout.
 type Graph struct {
 	Nodes     []*Node
 	Edges     []*Edge
 	Direction Direction
+	Routing   Routing
 	// RankSep is the gap between levels; NodeSep the gap between siblings.
 	// Zero picks the defaults (40 and 24).
 	RankSep, NodeSep float64

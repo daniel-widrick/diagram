@@ -5,16 +5,16 @@
     <marker id="dg-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0,0 L8,4 L0,8 z" fill="#1b2430"/></marker>
   </defs>
   <rect width="1086.16" height="192.4" fill="#ffffff"/>
-  <path d="M148.09,49.1 C171.66,49.1 242.35,49.1 289.48,49.1 C336.61,49.1 407.31,49.1 430.88,49.1" fill="none" stroke="#1b2430" stroke-width="1" stroke-linejoin="round" class="edge"/>
+  <path d="M148.09,49.1 L160.09,49.1 Q170.09,49.1 180.09,49.1 L398.88,49.1 Q408.88,49.1 418.88,49.1 L430.88,49.1" fill="none" stroke="#1b2430" stroke-width="1" stroke-linejoin="round" class="edge"/>
   <rect x="170.09" y="38.4" width="238.78" height="21.4" rx="3" fill="#ffffff"/>
   <text x="289.48" y="51.79" text-anchor="middle" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">o.customer_id = c.id · FK · indexed</text>
-  <path d="M609.12,49.1 C633.24,49.1 705.58,42.42 753.81,49.1 C802.04,55.78 874.39,82.52 898.5,89.2" fill="none" stroke="#1b2430" stroke-width="1" stroke-linejoin="round" class="edge"/>
+  <path d="M609.12,49.1 L640.91,49.1 Q650.91,49.1 660.91,49.1 L846.72,49.1 Q856.72,49.1 866.72,49.1 L877.5,49.1 Q887.5,49.1 887.5,59.1 L887.5,83.7 Q887.5,89.2 893,89.2 L898.5,89.2" fill="none" stroke="#1b2430" stroke-width="1" stroke-linejoin="round" class="edge"/>
   <rect x="650.91" y="38.4" width="205.81" height="21.4" rx="3" fill="#ffffff"/>
   <text x="753.81" y="51.79" text-anchor="middle" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">oi.order_id = o.id · FK · pkey</text>
-  <path d="M586.05,143.3 C614.01,143.3 701.74,149.98 753.81,143.3 C805.89,136.62 874.39,109.88 898.5,103.2" fill="none" stroke="#c94a34" stroke-width="1" stroke-linejoin="round" stroke-dasharray="6 4" class="edge weak"/>
+  <path d="M586.05,143.3 L621.12,143.3 Q631.12,143.3 641.12,143.3 L871,143.3 Q876.5,143.3 882,143.3 L882,143.3 Q887.5,143.3 887.5,137.8 L887.5,108.7 Q887.5,103.2 893,103.2 L898.5,103.2" fill="none" stroke="#c94a34" stroke-width="1" stroke-linejoin="round" stroke-dasharray="6 4" class="edge weak"/>
   <rect x="631.12" y="132.6" width="245.38" height="21.4" rx="3" fill="#ffffff"/>
   <text x="753.81" y="145.99" text-anchor="middle" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">oi.product_id = p.id · FK · no index</text>
-  <path d="M128.31,143.3 C155.17,143.3 235.21,143.3 289.48,143.3 C343.76,143.3 426.54,143.3 453.95,143.3" fill="none" stroke="#1b2430" stroke-width="1" stroke-linejoin="round" class="edge"/>
+  <path d="M128.31,143.3 L186.47,143.3 Q196.47,143.3 206.47,143.3 L372.5,143.3 Q382.5,143.3 392.5,143.3 L453.95,143.3" fill="none" stroke="#1b2430" stroke-width="1" stroke-linejoin="round" class="edge"/>
   <rect x="196.47" y="132.6" width="186.03" height="21.4" rx="3" fill="#ffffff"/>
   <text x="289.48" y="145.99" text-anchor="middle" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">p.category_id = cat.id · FK</text>
   <g class="node" data-id="customers">

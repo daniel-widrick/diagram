@@ -42,6 +42,7 @@ func checkTree(t *testing.T, g *diagram.Graph, l *diagram.Layout) {
 	t.Helper()
 	check.Layout(t, g, l)
 	check.Ports(t, g, l)
+	check.EdgesClear(t, g, l)
 	children := map[string][]*diagram.PlacedNode{}
 	for _, e := range g.Edges {
 		children[e.From] = append(children[e.From], l.Node(e.To))

@@ -228,7 +228,7 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 		c := byID[e.To]
 		p := c.parent
 		info := edges[c]
-		pe := &diagram.PlacedEdge{Edge: e}
+		pe := &diagram.PlacedEdge{Edge: e, Curved: g.Routing == diagram.RoutingCurved}
 		// Elbows sit past the whole parent level, not just this parent, so
 		// labels on the far side never overlap a taller node at that level.
 		pEnd := levelStart[p.depth] + p.rank

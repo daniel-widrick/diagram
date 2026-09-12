@@ -52,6 +52,7 @@ func checkLayered(t *testing.T, g *diagram.Graph, l *diagram.Layout) {
 	t.Helper()
 	check.Layout(t, g, l)
 	check.Ports(t, g, l)
+	check.EdgesClear(t, g, l)
 	for _, e := range l.Edges {
 		if e.From == e.To {
 			continue
@@ -165,12 +166,14 @@ func TestLongEdgesAreRouted(t *testing.T) {
 	if long == nil || len(long.Path) < 5 {
 		t.Fatalf("long edge should pass through dummies: %+v", long)
 	}
-	// Brandes-Köpf keeps the dummies of a long edge vertically aligned.
-	for _, p := range long.Path[1 : len(long.Path)-1] {
-		if check.Abs(p.X-long.Path[1].X) > 0.01 {
-			t.Errorf("long edge not straight through dummies: %v", long.Path)
-			break
-		}
+	// Brandes-Köpf keeps the dummies of a long edge vertically aligned: apart
+	// from the port jog at each end, the route is one vertical line.
+	xs := map[float64]bool{}
+	for _, p := range long.Path[2 : len(long.Path)-2] {
+		xs[p.X] = true
+	}
+	if len(xs) != 1 {
+		t.Errorf("long edge not straight through dummies: %v", long.Path)
 	}
 	// The long edge must not pass through the middle nodes.
 	for _, p := range long.Path[1 : len(long.Path)-1] {
@@ -206,7 +209,7 @@ func TestRandomGraphs(t *testing.T) {
 	dirs := []diagram.Direction{diagram.TopDown, diagram.BottomUp, diagram.LeftRight, diagram.RightLeft}
 	for iter := 0; iter < 60; iter++ {
 		n := 2 + rng.Intn(25)
-		g := &diagram.Graph{Direction: dirs[iter%4]}
+		g := &diagram.Graph{Direction: dirs[iter%4], Routing: diagram.Routing(iter / 4 % 2)}
 		for i := 0; i < n; i++ {
 			g.Nodes = append(g.Nodes, mk(fmt.Sprint(i), fmt.Sprintf("node %d", i), fmt.Sprintf("%0*d", 1+rng.Intn(20), i)))
 		}
@@ -268,5 +271,43 @@ func TestStraightChain(t *testing.T) {
 		if check.Abs(l.Node(id).Rect.Center().X-x) > 0.01 {
 			t.Errorf("chain not straight: %s at %v vs %v", id, l.Node(id).Rect.Center().X, x)
 		}
+	}
+}
+
+func TestOrthogonalRouting(t *testing.T) {
+	g := joinGraph()
+	g.Routing = diagram.RoutingOrthogonal
+	l, err := Layout(g, opts())
+	if err != nil {
+		t.Fatal(err)
+	}
+	checkLayered(t, g, l)
+	for _, e := range l.Edges {
+		if e.Curved {
+			t.Errorf("edge %s->%s should not be curved in orthogonal mode", e.From, e.To)
+		}
+	}
+	// Hops that turn in the same band on overlapping intervals use different
+	// tracks. K2,2 cannot be drawn without a crossing, so two hops must jog
+	// across each other in the same band.
+	g2 := &diagram.Graph{Routing: diagram.RoutingOrthogonal,
+		Nodes: []*diagram.Node{mk("a", "a"), mk("b", "b"), mk("x", "x"), mk("y", "y")},
+		Edges: []*diagram.Edge{{From: "a", To: "x"}, {From: "a", To: "y"}, {From: "b", To: "x"}, {From: "b", To: "y"}},
+	}
+	l2, err := Layout(g2, opts())
+	if err != nil {
+		t.Fatal(err)
+	}
+	checkLayered(t, g2, l2)
+	tracks := map[float64]bool{}
+	for _, e := range l2.Edges {
+		for i := 0; i+1 < len(e.Path); i++ {
+			if check.Abs(e.Path[i].Y-e.Path[i+1].Y) < 0.01 && check.Abs(e.Path[i].X-e.Path[i+1].X) > 0.01 {
+				tracks[e.Path[i].Y] = true
+			}
+		}
+	}
+	if len(tracks) < 2 {
+		t.Errorf("crossing hops should use at least two tracks, got %d", len(tracks))
 	}
 }

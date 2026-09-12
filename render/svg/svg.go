@@ -6,6 +6,7 @@ package svg
 import (
 	"fmt"
 	"html"
+	"math"
 	"strings"
 
 	"github.com/daniel-widrick/diagram"
@@ -232,20 +233,30 @@ func labelBackground(th Theme) string {
 	return th.Background
 }
 
-// smoothPath draws a Catmull-Rom spline through the points as cubic
-// Béziers, so routed edges bend gently instead of kinking at each dummy.
+// cornerRadius is the largest rounding applied to a path corner.
+const cornerRadius = 10
+
+// smoothPath rounds every corner of a polyline with a quadratic curve
+// whose control point is the corner itself. The curve stays inside the
+// wedge between the two segments, so a route that avoids obstacles with
+// sharp corners still avoids them when rounded.
 func smoothPath(pts []diagram.Point) string {
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "M%s,%s", f(pts[0].X), f(pts[0].Y))
-	for i := 0; i+1 < len(pts); i++ {
-		p0 := pts[max(i-1, 0)]
-		p1 := pts[i]
-		p2 := pts[i+1]
-		p3 := pts[min(i+2, len(pts)-1)]
-		c1 := diagram.Point{X: p1.X + (p2.X-p0.X)/6, Y: p1.Y + (p2.Y-p0.Y)/6}
-		c2 := diagram.Point{X: p2.X - (p3.X-p1.X)/6, Y: p2.Y - (p3.Y-p1.Y)/6}
-		fmt.Fprintf(&sb, " C%s,%s %s,%s %s,%s", f(c1.X), f(c1.Y), f(c2.X), f(c2.Y), f(p2.X), f(p2.Y))
+	for i := 1; i+1 < len(pts); i++ {
+		p, c, n := pts[i-1], pts[i], pts[i+1]
+		lin := math.Hypot(c.X-p.X, c.Y-p.Y)
+		lout := math.Hypot(n.X-c.X, n.Y-c.Y)
+		if lin < 0.01 || lout < 0.01 {
+			continue
+		}
+		r := math.Min(cornerRadius, math.Min(lin/2, lout/2))
+		a := diagram.Point{X: c.X - (c.X-p.X)/lin*r, Y: c.Y - (c.Y-p.Y)/lin*r}
+		b := diagram.Point{X: c.X + (n.X-c.X)/lout*r, Y: c.Y + (n.Y-c.Y)/lout*r}
+		fmt.Fprintf(&sb, " L%s,%s Q%s,%s %s,%s", f(a.X), f(a.Y), f(c.X), f(c.Y), f(b.X), f(b.Y))
 	}
+	last := pts[len(pts)-1]
+	fmt.Fprintf(&sb, " L%s,%s", f(last.X), f(last.Y))
 	return sb.String()
 }
 

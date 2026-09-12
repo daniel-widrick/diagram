@@ -137,6 +137,68 @@ func Ports(t *testing.T, g *diagram.Graph, l *diagram.Layout) {
 	}
 }
 
+// EdgesClear verifies that no edge segment passes through a node or through
+// another edge's label box, and, when the graph asks for orthogonal routing,
+// that every segment is axis-aligned. Self loops are skipped.
+func EdgesClear(t *testing.T, g *diagram.Graph, l *diagram.Layout) {
+	t.Helper()
+	for _, e := range l.Edges {
+		if e.From == e.To {
+			continue
+		}
+		for i := 0; i+1 < len(e.Path); i++ {
+			a, b := e.Path[i], e.Path[i+1]
+			if g.Routing == diagram.RoutingOrthogonal && Abs(a.X-b.X) > 0.01 && Abs(a.Y-b.Y) > 0.01 {
+				t.Errorf("edge %s->%s segment %d not axis-aligned: %+v %+v", e.From, e.To, i, a, b)
+			}
+			for _, n := range l.Nodes {
+				if segmentEntersRect(a, b, n.Rect) {
+					t.Errorf("edge %s->%s segment %d enters node %s", e.From, e.To, i, n.ID)
+				}
+			}
+			for _, o := range l.Edges {
+				if o == e || o.Label == nil {
+					continue
+				}
+				if segmentEntersRect(a, b, o.Label.Box) {
+					t.Errorf("edge %s->%s segment %d crosses label %q", e.From, e.To, i, o.Label.Text)
+				}
+			}
+		}
+	}
+}
+
+// segmentEntersRect reports whether the segment ab has a point strictly
+// inside r (touching the border does not count).
+func segmentEntersRect(a, b diagram.Point, r diagram.Rect) bool {
+	const eps = 0.05
+	in := diagram.Rect{X: r.X + eps, Y: r.Y + eps, W: r.W - 2*eps, H: r.H - 2*eps}
+	if in.W <= 0 || in.H <= 0 {
+		return false
+	}
+	// Liang-Barsky clipping of the parametric segment against the rect.
+	dx, dy := b.X-a.X, b.Y-a.Y
+	t0, t1 := 0.0, 1.0
+	for _, c := range [][2]float64{{-dx, a.X - in.X}, {dx, in.Right() - a.X}, {-dy, a.Y - in.Y}, {dy, in.Bottom() - a.Y}} {
+		p, q := c[0], c[1]
+		if p == 0 {
+			if q < 0 {
+				return false
+			}
+			continue
+		}
+		tt := q / p
+		if p < 0 {
+			if tt > t0 {
+				t0 = tt
+			}
+		} else if tt < t1 {
+			t1 = tt
+		}
+	}
+	return t0 < t1
+}
+
 func sideOf(d diagram.Direction, r diagram.Rect, p diagram.Point) string {
 	switch {
 	case Abs(p.Y-r.Y) < 0.01:

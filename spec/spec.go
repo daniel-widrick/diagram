@@ -13,12 +13,14 @@ import (
 // Graph is the JSON shape.
 type Graph struct {
 	// Direction is "topdown" (default), "bottomup", "leftright" or "rightleft".
-	Direction string  `json:"direction,omitempty"`
-	RankSep   float64 `json:"rankSep,omitempty"`
-	NodeSep   float64 `json:"nodeSep,omitempty"`
-	Margin    float64 `json:"margin,omitempty"`
-	Nodes     []Node  `json:"nodes"`
-	Edges     []Edge  `json:"edges"`
+	Direction string `json:"direction,omitempty"`
+	// Routing is "curved" (default, rounded corners) or "orthogonal".
+	Routing string  `json:"routing,omitempty"`
+	RankSep float64 `json:"rankSep,omitempty"`
+	NodeSep float64 `json:"nodeSep,omitempty"`
+	Margin  float64 `json:"margin,omitempty"`
+	Nodes   []Node  `json:"nodes"`
+	Edges   []Edge  `json:"edges"`
 }
 
 // Node is one box.
@@ -65,6 +67,13 @@ func (sp Graph) Graph() (*diagram.Graph, error) {
 		g.Direction = diagram.RightLeft
 	default:
 		return nil, fmt.Errorf("spec: unknown direction %q", sp.Direction)
+	}
+	switch sp.Routing {
+	case "", "curved":
+	case "orthogonal":
+		g.Routing = diagram.RoutingOrthogonal
+	default:
+		return nil, fmt.Errorf("spec: unknown routing %q", sp.Routing)
 	}
 	for _, n := range sp.Nodes {
 		if n.ID == "" {

@@ -170,9 +170,14 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 	}
 
 	outPort, inPort := ports(nodes, edges)
+	layerEnd := make([]float64, len(layers))
+	for i := range layers {
+		layerEnd[i] = layerStart[i] + layerExt[i]
+	}
+	routes := routeChannels(edges, outPort, inPort, layerStart, layerEnd)
 
 	for _, ed := range edges {
-		pe := &diagram.PlacedEdge{Edge: ed.e, Curved: true, Reversed: ed.reversed}
+		pe := &diagram.PlacedEdge{Edge: ed.e, Curved: g.Routing == diagram.RoutingCurved, Reversed: ed.reversed}
 		if ed.selfLoop {
 			n := ed.from
 			right := n.c + n.cross/2
@@ -183,10 +188,10 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 			out.Edges = append(out.Edges, pe)
 			continue
 		}
-		// Path in layout direction: from's port, dummies' centres, to's port.
-		pts := [][2]float64{{outPort[ed], ed.from.r + ed.from.rank}}
+		// Path in layout direction through the channel tracks; labels sit on
+		// their dummies, which the route passes straight through.
+		pts := routes[ed]
 		for _, d := range ed.chain {
-			pts = append(pts, [2]float64{d.c, d.r + d.rank/2})
 			if d.label {
 				box := frame.Rect(d.c-d.cross/2, d.r, d.cross, d.rank)
 				pe.Label = &diagram.PlacedLabel{
@@ -198,7 +203,6 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 				}
 			}
 		}
-		pts = append(pts, [2]float64{inPort[ed], ed.to.r})
 		if ed.reversed {
 			for i, j := 0, len(pts)-1; i < j; i, j = i+1, j-1 {
 				pts[i], pts[j] = pts[j], pts[i]
@@ -214,6 +218,98 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 }
 
 const loopSize = 18
+
+// hop is one edge segment between adjacent layers.
+type hop struct {
+	ed         *edge
+	cu, cv     float64 // cross positions at the upper and lower ends
+	uEnd, vStr float64 // rank positions: leaving the upper, entering the lower
+	band       int
+	track      float64
+}
+
+// routeChannels builds an orthogonal route for every edge. Each hop
+// between adjacent layers turns in the band between them, where no node or
+// label box can be; hops sharing a band get separate tracks when their
+// cross intervals overlap, so segments never lie on top of each other.
+func routeChannels(edges []*edge, outPort, inPort map[*edge]float64, layerStart, layerEnd []float64) map[*edge][][2]float64 {
+	var hops []*hop
+	perEdge := map[*edge][]*hop{}
+	for _, ed := range edges {
+		if ed.selfLoop {
+			continue
+		}
+		seq := append(append([]*node{ed.from}, ed.chain...), ed.to)
+		for i := 0; i+1 < len(seq); i++ {
+			u, v := seq[i], seq[i+1]
+			h := &hop{ed: ed, cu: u.c, cv: v.c, uEnd: u.r + u.rank, vStr: v.r, band: u.layer}
+			if i == 0 {
+				h.cu = outPort[ed]
+			}
+			if i+1 == len(seq)-1 {
+				h.cv = inPort[ed]
+			}
+			hops = append(hops, h)
+			perEdge[ed] = append(perEdge[ed], h)
+		}
+	}
+	// Track assignment per band: greedy interval colouring by start.
+	byBand := map[int][]*hop{}
+	for _, h := range hops {
+		if math.Abs(h.cu-h.cv) > 0.01 {
+			byBand[h.band] = append(byBand[h.band], h)
+		}
+	}
+	for band, hs := range byBand {
+		sort.SliceStable(hs, func(i, j int) bool { return math.Min(hs[i].cu, hs[i].cv) < math.Min(hs[j].cu, hs[j].cv) })
+		var trackEnd []float64 // max cross reached on each track
+		trackOf := make([]int, len(hs))
+		for i, h := range hs {
+			lo, hi := math.Min(h.cu, h.cv), math.Max(h.cu, h.cv)
+			placed := false
+			for t := range trackEnd {
+				if trackEnd[t]+trackGap <= lo {
+					trackEnd[t] = hi
+					trackOf[i] = t
+					placed = true
+					break
+				}
+			}
+			if !placed {
+				trackEnd = append(trackEnd, hi)
+				trackOf[i] = len(trackEnd) - 1
+			}
+		}
+		bandStart, bandEnd := layerEnd[band], layerStart[band+1]
+		n := float64(len(trackEnd))
+		for i, h := range hs {
+			h.track = bandStart + (bandEnd-bandStart)*float64(trackOf[i]+1)/(n+1)
+		}
+	}
+	routes := map[*edge][][2]float64{}
+	for ed, hs := range perEdge {
+		var pts [][2]float64
+		add := func(p [2]float64) {
+			if n := len(pts); n > 0 && math.Abs(pts[n-1][0]-p[0]) < 0.01 && math.Abs(pts[n-1][1]-p[1]) < 0.01 {
+				return
+			}
+			pts = append(pts, p)
+		}
+		for _, h := range hs {
+			add([2]float64{h.cu, h.uEnd})
+			if math.Abs(h.cu-h.cv) > 0.01 {
+				add([2]float64{h.cu, h.track})
+				add([2]float64{h.cv, h.track})
+			}
+			add([2]float64{h.cv, h.vStr})
+		}
+		routes[ed] = pts
+	}
+	return routes
+}
+
+// trackGap is the cross-axis clearance between hops sharing a track.
+const trackGap = 6
 
 // ports spreads each node's outgoing edges along its far side and incoming
 // edges along its near side, ordered by where the other end goes.
