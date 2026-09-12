@@ -1,0 +1,17 @@
+{
+  "nodes": [
+    {"id": "agg", "lines": [[{"text": "Aggregate", "style": "title"}]]},
+    {"id": "nl", "lines": [[{"text": "Nested Loop", "style": "title"}]]},
+    {"id": "idx", "lines": [[{"text": "Index Scan", "style": "title"}], [{"text": "products_pkey", "style": "muted"}]]},
+    {"id": "gather", "collapsed": true, "lines": [[{"text": "Gather ", "style": "title"}, {"text": "2 workers", "style": "muted"}]]},
+    {"id": "seq", "kind": "hot", "lines": [[{"text": "Seq Scan order_items", "style": "title"}]]},
+    {"id": "seq2", "lines": [[{"text": "Seq Scan more", "style": "title"}]]}
+  ],
+  "edges": [
+    {"from": "agg", "to": "nl", "label": "1 row", "arrow": "backward"},
+    {"from": "nl", "to": "idx", "label": "1 row", "arrow": "backward"},
+    {"from": "nl", "to": "gather", "label": "781 rows", "arrow": "backward"},
+    {"from": "gather", "to": "seq", "arrow": "backward"},
+    {"from": "gather", "to": "seq2", "arrow": "backward"}
+  ]
+}

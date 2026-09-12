@@ -51,6 +51,7 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 	if len(g.Nodes) == 0 {
 		return &diagram.Layout{}, nil
 	}
+	g, hiddenIDs, hiddenCounts := diagram.Visible(g)
 	rankSep, nodeSep, margin := g.RankSep, g.NodeSep, g.Margin
 	if rankSep <= 0 {
 		rankSep = 40
@@ -193,10 +194,11 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 	totalCross := maxC - minC + 2*margin
 	frame.Total = diagram.Size{W: totalCross, H: totalRank}
 
-	out := &diagram.Layout{Size: frame.Size()}
+	out := &diagram.Layout{Size: frame.Size(), HiddenNodes: hiddenIDs}
 	for _, nd := range all {
 		pn := nd.pn
 		pn.Depth = nd.depth
+		pn.Hidden = hiddenCounts[pn.ID]
 		nd.c += dc
 		rect := frame.Rect(nd.c-nd.cross/2, levelStart[nd.depth], nd.cross, nd.rank)
 		if pn.BarRect != nil {

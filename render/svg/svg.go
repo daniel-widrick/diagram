@@ -206,6 +206,14 @@ func Render(l *diagram.Layout, o Options) string {
 					f(n.Rect.X+n.Padding+sp.X), f(n.Rect.Y+ln.Baseline), color, fontAttrs(th, st), title, html.EscapeString(sp.Text))
 			}
 		}
+		if n.Collapsed && n.Hidden > 0 {
+			label := fmt.Sprintf("+%d", n.Hidden)
+			st, _ := styles.Get("edge")
+			bw := float64(len(label))*st.Size*0.62 + 10
+			bx, by := n.Rect.Right()-bw+4, n.Rect.Bottom()-8
+			fmt.Fprintf(&b, `    <rect x="%s" y="%s" width="%s" height="16" rx="8" fill="%s" class="badge"/>`+"\n", f(bx), f(by), f(bw), ks.Stroke)
+			fmt.Fprintf(&b, `    <text x="%s" y="%s" text-anchor="middle" fill="%s" %s>%s</text>`+"\n", f(bx+bw/2), f(by+11.5), th.Background, fontAttrs(th, st), label)
+		}
 		if n.BarRect != nil && n.Bar != nil {
 			r := n.BarRect
 			fmt.Fprintf(&b, `    <rect x="%s" y="%s" width="%s" height="%s" rx="2" fill="%s"/>`+"\n", f(r.X), f(r.Y), f(r.W), f(r.H), th.BarTrack)

@@ -51,6 +51,7 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 	if len(g.Nodes) == 0 {
 		return &diagram.Layout{}, nil
 	}
+	g, hiddenIDs, hiddenCounts := diagram.Visible(g)
 	rankSep, nodeSep, margin := g.RankSep, g.NodeSep, g.Margin
 	if rankSep <= 0 {
 		rankSep = 44
@@ -150,7 +151,7 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 	dc := margin - minC
 	frame.Total = diagram.Size{W: maxC - minC + 2*margin, H: totalRank}
 
-	out := &diagram.Layout{Size: frame.Size()}
+	out := &diagram.Layout{Size: frame.Size(), HiddenNodes: hiddenIDs}
 	for _, l := range layers {
 		for _, nd := range l {
 			nd.c += dc
@@ -165,6 +166,7 @@ func Layout(g *diagram.Graph, o diagram.Options) (*diagram.Layout, error) {
 			}
 			nd.pn.Rect = rect
 			nd.pn.Depth = nd.layer / 2
+			nd.pn.Hidden = hiddenCounts[nd.pn.ID]
 			out.Nodes = append(out.Nodes, nd.pn)
 		}
 	}

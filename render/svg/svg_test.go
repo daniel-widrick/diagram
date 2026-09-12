@@ -91,6 +91,35 @@ func TestGoldenJoin(t *testing.T) {
 	}
 }
 
+func TestGoldenCollapsed(t *testing.T) {
+	g := loadSpec(t, filepath.Join("..", "..", "testdata", "collapsed.json"))
+	opts := diagram.Options{Measurer: text.NewGoFonts(), Styles: text.DefaultStyles()}
+	l, err := tree.Layout(g, opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(l.Nodes) != 4 || len(l.HiddenNodes) != 2 || l.Node("gather").Hidden != 2 {
+		t.Fatalf("collapse: %d nodes, hidden %v, gather hides %d", len(l.Nodes), l.HiddenNodes, l.Node("gather").Hidden)
+	}
+	got := Render(l, Options{Theme: Default(), Styles: opts.Styles, Title: "Collapsed"})
+	golden := filepath.Join("..", "..", "testdata", "collapsed.svg")
+	if *update {
+		if err := os.WriteFile(golden, []byte(got), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	want, err := os.ReadFile(golden)
+	if err != nil {
+		t.Fatalf("%v (run with -update to create)", err)
+	}
+	if string(want) != got {
+		t.Errorf("rendered SVG differs from %s", golden)
+	}
+	if !strings.Contains(got, `class="badge"`) || !strings.Contains(got, ">+2</text>") {
+		t.Error("missing +2 badge")
+	}
+}
+
 func TestTokensTheme(t *testing.T) {
 	g := loadSpec(t, filepath.Join("..", "..", "testdata", "plan.json"))
 	opts := diagram.Options{Measurer: text.NewGoFonts(), Styles: text.DefaultStyles()}

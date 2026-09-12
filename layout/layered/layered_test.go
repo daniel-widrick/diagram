@@ -211,7 +211,9 @@ func TestRandomGraphs(t *testing.T) {
 		n := 2 + rng.Intn(25)
 		g := &diagram.Graph{Direction: dirs[iter%4], Routing: diagram.Routing(iter / 4 % 2)}
 		for i := 0; i < n; i++ {
-			g.Nodes = append(g.Nodes, mk(fmt.Sprint(i), fmt.Sprintf("node %d", i), fmt.Sprintf("%0*d", 1+rng.Intn(20), i)))
+			nd := mk(fmt.Sprint(i), fmt.Sprintf("node %d", i), fmt.Sprintf("%0*d", 1+rng.Intn(20), i))
+			nd.Collapsed = rng.Intn(10) == 0
+			g.Nodes = append(g.Nodes, nd)
 		}
 		m := n + rng.Intn(n*2)
 		for j := 0; j < m; j++ {
@@ -226,6 +228,23 @@ func TestRandomGraphs(t *testing.T) {
 			t.Fatalf("iter %d: %v", iter, err)
 		}
 		checkLayered(t, g, l)
+		hidden := map[string]bool{}
+		for _, id := range l.HiddenNodes {
+			hidden[id] = true
+		}
+		for _, n := range g.Nodes {
+			if hidden[n.ID] && l.Node(n.ID) != nil {
+				t.Errorf("hidden node %s placed", n.ID)
+			}
+			if !hidden[n.ID] && l.Node(n.ID) == nil {
+				t.Errorf("visible node %s missing", n.ID)
+			}
+		}
+		for _, e := range l.Edges {
+			if hidden[e.From] || hidden[e.To] {
+				t.Errorf("edge %s->%s touches a hidden node", e.From, e.To)
+			}
+		}
 	}
 }
 

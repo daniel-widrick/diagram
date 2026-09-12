@@ -98,6 +98,10 @@ type Node struct {
 	// not measured. Use it when the caller measured the label itself (for
 	// example in a browser).
 	Size Size
+	// Collapsed hides everything below this node: its subtree in a tree,
+	// and in a layered graph every node that can only be reached through
+	// it. The node itself stays and reports how many nodes it hides.
+	Collapsed bool
 	// Data is passed through to PlacedNode untouched for renderers and callers.
 	Data any
 }
@@ -181,6 +185,8 @@ type PlacedNode struct {
 	Padding float64
 	// Depth is the level in a tree layout (root 0); -1 when not applicable.
 	Depth int
+	// Hidden is how many nodes this node hides when collapsed.
+	Hidden int
 }
 
 // PlacedLabel is an edge label. Box is the space reserved for it; Pos is
@@ -215,7 +221,9 @@ type Layout struct {
 	Nodes []*PlacedNode
 	Edges []*PlacedEdge
 	Size  Size
-	byID  map[string]*PlacedNode
+	// HiddenNodes lists ids left out because an ancestor is collapsed.
+	HiddenNodes []string
+	byID        map[string]*PlacedNode
 }
 
 // Node finds a placed node by ID.

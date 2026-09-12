@@ -30,8 +30,9 @@ type Node struct {
 	Bar      *float64 `json:"bar,omitempty"`
 	MaxWidth float64  `json:"maxWidth,omitempty"`
 	// Overflow is "grow" (default), "ellipsize" or "wrap".
-	Overflow string           `json:"overflow,omitempty"`
-	Lines    [][]diagram.Span `json:"lines"`
+	Overflow  string           `json:"overflow,omitempty"`
+	Collapsed bool             `json:"collapsed,omitempty"`
+	Lines     [][]diagram.Span `json:"lines"`
 }
 
 // Edge is one connection.
@@ -79,7 +80,7 @@ func (sp Graph) Graph() (*diagram.Graph, error) {
 		if n.ID == "" {
 			return nil, fmt.Errorf("spec: node without id")
 		}
-		nd := &diagram.Node{ID: n.ID, Kind: n.Kind, Bar: n.Bar, MaxWidth: n.MaxWidth}
+		nd := &diagram.Node{ID: n.ID, Kind: n.Kind, Bar: n.Bar, MaxWidth: n.MaxWidth, Collapsed: n.Collapsed}
 		switch n.Overflow {
 		case "", "grow":
 		case "ellipsize":

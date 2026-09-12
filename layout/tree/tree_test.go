@@ -45,7 +45,9 @@ func checkTree(t *testing.T, g *diagram.Graph, l *diagram.Layout) {
 	check.EdgesClear(t, g, l)
 	children := map[string][]*diagram.PlacedNode{}
 	for _, e := range g.Edges {
-		children[e.From] = append(children[e.From], l.Node(e.To))
+		if c := l.Node(e.To); c != nil && l.Node(e.From) != nil && !l.Node(e.From).Collapsed {
+			children[e.From] = append(children[e.From], c)
+		}
 	}
 	for pid, kids := range children {
 		p := l.Node(pid)
@@ -182,7 +184,7 @@ func TestRandomTrees(t *testing.T) {
 			for j := rng.Intn(3); j > 0; j-- {
 				lines = append(lines, diagram.L("muted", fmt.Sprintf("%0*d", 1+rng.Intn(30), j)))
 			}
-			g.Nodes = append(g.Nodes, &diagram.Node{ID: fmt.Sprint(i), Lines: lines})
+			g.Nodes = append(g.Nodes, &diagram.Node{ID: fmt.Sprint(i), Lines: lines, Collapsed: rng.Intn(8) == 0})
 			if i > 0 {
 				e := &diagram.Edge{From: fmt.Sprint(rng.Intn(i)), To: fmt.Sprint(i)}
 				if rng.Intn(2) == 0 {
@@ -196,6 +198,29 @@ func TestRandomTrees(t *testing.T) {
 			t.Fatalf("iter %d: %v", iter, err)
 		}
 		checkTree(t, g, l)
+		checkHidden(t, g, l)
+	}
+}
+
+// checkHidden verifies collapsed nodes hide exactly their subtrees.
+func checkHidden(t *testing.T, g *diagram.Graph, l *diagram.Layout) {
+	t.Helper()
+	hidden := map[string]bool{}
+	for _, id := range l.HiddenNodes {
+		hidden[id] = true
+	}
+	for _, n := range l.Nodes {
+		if hidden[n.ID] {
+			t.Errorf("hidden node %s was placed", n.ID)
+		}
+	}
+	for _, e := range g.Edges {
+		if hidden[e.To] && !hidden[e.From] && !l.Node(e.From).Collapsed {
+			t.Errorf("node %s hidden though parent %s is visible and not collapsed", e.To, e.From)
+		}
+		if !hidden[e.To] && l.Node(e.From) == nil {
+			t.Errorf("node %s visible though parent %s is hidden", e.To, e.From)
+		}
 	}
 }
 

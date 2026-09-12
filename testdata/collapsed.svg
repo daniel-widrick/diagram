@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 287.22 233.6" width="287.22" height="233.6">
+  <title>Collapsed</title>
+  <defs>
+    <marker id="dg-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0,0 L8,4 L0,8 z" fill="#1b2430"/></marker>
+  </defs>
+  <rect width="287.22" height="233.6" fill="#ffffff"/>
+  <polyline points="138.66,51.4 138.66,91.4" fill="none" stroke="#1b2430" stroke-width="1" stroke-linejoin="round" marker-start="url(#dg-arrow)" class="edge"/>
+  <text x="161.15" y="84.09" text-anchor="middle" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">1 row</text>
+  <path d="M131.66,126.8 L131.66,136.8 Q131.66,146.8 121.66,146.8 L78.86,146.8 Q68.86,146.8 68.86,156.8 L68.86,166.8" fill="none" stroke="#1b2430" stroke-width="1" stroke-linejoin="round" marker-start="url(#dg-arrow)" class="edge"/>
+  <text x="91.34" y="159.49" text-anchor="middle" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">1 row</text>
+  <path d="M145.66,126.8 L145.66,136.8 Q145.66,146.8 155.66,146.8 L198.47,146.8 Q208.47,146.8 208.47,156.8 L208.47,166.8" fill="none" stroke="#1b2430" stroke-width="1" stroke-linejoin="round" marker-start="url(#dg-arrow)" class="edge"/>
+  <text x="240.84" y="159.49" text-anchor="middle" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">781 rows</text>
+  <g class="node" data-id="agg">
+    <rect x="98.99" y="16" width="79.34" height="35.4" rx="4" fill="#eef1f5" stroke="#1b2430"/>
+    <text x="108.99" y="37.73" fill="#1b2430" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" font-weight="700" xml:space="preserve">Aggregate</text>
+  </g>
+  <g class="node" data-id="nl">
+    <rect x="92.4" y="91.4" width="92.53" height="35.4" rx="4" fill="#eef1f5" stroke="#1b2430"/>
+    <text x="102.4" y="113.13" fill="#1b2430" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" font-weight="700" xml:space="preserve">Nested Loop</text>
+  </g>
+  <g class="node" data-id="idx">
+    <rect x="16" y="166.8" width="105.72" height="50.8" rx="4" fill="#eef1f5" stroke="#1b2430"/>
+    <text x="26" y="188.53" fill="#1b2430" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" font-weight="700" xml:space="preserve">Index Scan</text>
+    <text x="26" y="203.93" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">products_pkey</text>
+  </g>
+  <g class="node" data-id="gather">
+    <rect x="145.72" y="166.8" width="125.5" height="35.4" rx="4" fill="#eef1f5" stroke="#1b2430"/>
+    <text x="155.72" y="188.53" fill="#1b2430" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" font-weight="700" xml:space="preserve">Gather </text>
+    <text x="201.88" y="188.53" fill="#4e5a68" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11" xml:space="preserve">2 workers</text>
+    <rect x="251.58" y="194.2" width="23.64" height="16" rx="8" fill="#1b2430" class="badge"/>
+    <text x="263.4" y="205.7" text-anchor="middle" fill="#ffffff" font-family='"Go Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace' font-size="11">+2</text>
+  </g>
+</svg>
